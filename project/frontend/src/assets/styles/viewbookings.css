@@ -1,0 +1,67 @@
+.view-bookings-page {
+  padding: 30px;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+  background-color: #121212;
+  min-height: 100vh;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #00ff99;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #112b11;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 14px 20px;
+  text-align: center;
+}
+
+th {
+  background-color: #004d40;
+  color: #fefffd;
+}
+
+td {
+  border-bottom: 1px solid #333;
+  color: #ffffff; /* <-- key fix added here */
+}
+
+/* Optional: add zebra stripes for better readability */
+tr:nth-child(even) {
+  background-color: #162b16;
+}
+
+/* Optional: highlight row on hover */
+tr:hover {
+  background-color: #1f3d1f;
+}
+
+.cancel-btn {
+  padding: 8px 18px;
+  background-color: #ff4444;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #cc0000;
+}
+
+p {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 18px;
+  color: #fff;
+}

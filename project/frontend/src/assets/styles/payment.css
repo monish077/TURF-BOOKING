@@ -1,0 +1,45 @@
+.payment-page {
+  padding: 40px;
+  font-family: 'Poppins', sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.payment-card {
+  background: #183D3D;
+  color: #fff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.payment-card h2 {
+  margin-bottom: 20px;
+}
+
+.payment-card p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.payment-card select {
+  padding: 10px;
+  width: 100%;
+  margin: 15px 0;
+  border-radius: 8px;
+}
+
+.pay-now-btn {
+  padding: 12px 25px;
+  background-color: #00A86B;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.pay-now-btn:hover {
+  background-color: #00945f;
+}
