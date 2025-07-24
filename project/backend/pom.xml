@@ -56,11 +56,18 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok (no version needed — Spring Boot 3.5.0 manages this) -->
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Twilio SDK for WhatsApp Messaging -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>9.8.0</version>
         </dependency>
 
         <!-- Spring Boot Test -->

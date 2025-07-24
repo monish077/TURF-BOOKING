@@ -1,17 +1,16 @@
 package com.example.demo.turfbooking.controller;
 
-import java.util.Map;
+import com.example.demo.turfbooking.entity.Admin;
+import com.example.demo.turfbooking.service.AdminService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.turfbooking.entity.Admin;
-import com.example.demo.turfbooking.service.AdminService;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -25,7 +24,7 @@ public class AdminController {
         this.adminService = adminService;
     }
 
-    // Admin Login
+    // ✅ Admin Login
     @PostMapping("/login")
     public ResponseEntity<?> loginAdmin(@RequestBody Map<String, String> loginRequest) {
         String email = loginRequest.get("email");
@@ -40,9 +39,14 @@ public class AdminController {
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "Invalid admin credentials")));
     }
 
-    // Admin Registration
+    // ✅ Admin Registration with Validation
     @PostMapping("/register")
-    public ResponseEntity<?> registerAdmin(@RequestBody Admin admin) {
+    public ResponseEntity<?> registerAdmin(@Valid @RequestBody Admin admin, BindingResult result) {
+        if (result.hasErrors()) {
+            // Return first validation error message
+            return ResponseEntity.badRequest().body(Map.of("error", result.getAllErrors().get(0).getDefaultMessage()));
+        }
+
         try {
             Admin registeredAdmin = adminService.registerAdmin(admin);
             return ResponseEntity.status(201).body(Map.of(

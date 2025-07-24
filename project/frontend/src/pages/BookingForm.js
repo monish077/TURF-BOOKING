@@ -19,8 +19,9 @@ const BookingForm = () => {
 
   const [formData, setFormData] = useState({
     userName: "",
+    whatsappNumber: "",
     date: "",
-    slot: "",
+    slot: ""
   });
 
   const [bookedSlots, setBookedSlots] = useState([]);
@@ -43,15 +44,13 @@ const BookingForm = () => {
         acc[booking.date] = (acc[booking.date] || 0) + 1;
         return acc;
       }, {});
-      const fullDates = Object.keys(dateCounts).filter(
-        (date) => dateCounts[date] >= 24
-      );
+      const fullDates = Object.keys(dateCounts).filter(date => dateCounts[date] >= 24);
       setDisabledDates(fullDates);
 
       if (formData.date) {
         const bookedForDate = turfBookings
-          .filter((booking) => booking.date === formData.date)
-          .map((booking) => booking.slot);
+          .filter(booking => booking.date === formData.date)
+          .map(booking => booking.slot);
         setBookedSlots(bookedForDate);
       }
     } catch (err) {
@@ -81,12 +80,12 @@ const BookingForm = () => {
 
     if (name === "date" && disabledDates.includes(value)) {
       alert("This date is fully booked. Please choose another date.");
-      setFormData({ ...formData, date: "" });
+      setFormData(prev => ({ ...prev, date: "" }));
       setBookedSlots([]);
       return;
     }
 
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -102,15 +101,17 @@ const BookingForm = () => {
         return;
       }
 
+      // ✅ Sanitize WhatsApp number: keep only digits
+      const sanitizedWhatsApp = formData.whatsappNumber.replace(/\D/g, "");
+
       const bookingData = {
         ...formData,
+        whatsappNumber: sanitizedWhatsApp,
         userEmail: userEmail,
         turfId: id,
         turfName: turfName,
-        price: turfPrice,
+        price: turfPrice
       };
-
-      console.log("Sending booking:", bookingData);
 
       const res = await createBooking(bookingData);
       const newBookingId = res.data.id;
@@ -130,6 +131,7 @@ const BookingForm = () => {
       <div className="booking-card">
         <h2>Book {turfName}</h2>
         <p className="price">Price: ₹{turfPrice}</p>
+
         <form onSubmit={handleSubmit}>
           <label>Name:</label>
           <input
@@ -137,6 +139,16 @@ const BookingForm = () => {
             name="userName"
             value={formData.userName}
             onChange={handleChange}
+            required
+          />
+
+          <label>WhatsApp Number:</label>
+          <input
+            type="tel"
+            name="whatsappNumber"
+            value={formData.whatsappNumber}
+            onChange={handleChange}
+            placeholder="e.g. +91 8667541251"
             required
           />
 

@@ -4,14 +4,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;       // <-- add this
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "bookings")              // <-- this tells JPA to use 'bookings' table
+@Table(name = "bookings")  // JPA table name
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,6 +24,8 @@ public class Booking {
 
     private String userName;
     private String userEmail;
+    private String whatsappNumber;  // 🆕 New field
+
     private Long turfId;
     private String turfName;
     private String date;

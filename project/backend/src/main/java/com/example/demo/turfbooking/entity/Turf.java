@@ -1,11 +1,6 @@
 package com.example.demo.turfbooking.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "turfs")
@@ -16,27 +11,40 @@ public class Turf {
     private Long id;
 
     private String name;
+
     private String location;
+
     private double pricePerHour;
 
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
-    // Constructors
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String facilities;
+
+    @Column(name = "available_slots", columnDefinition = "TEXT")
+    private String availableSlots;
+
+    // Default constructor
     public Turf() {
-        // Default constructor
     }
 
-    public Turf(String name, String location, double pricePerHour, String imageUrl) {
+    // All-args constructor
+    public Turf(String name, String location, double pricePerHour, String imageUrl,
+                String description, String facilities, String availableSlots) {
         this.name = name;
         this.location = location;
         this.pricePerHour = pricePerHour;
         this.imageUrl = imageUrl;
+        this.description = description;
+        this.facilities = facilities;
+        this.availableSlots = availableSlots;
     }
 
     // Getters and Setters
-
     public Long getId() {
         return id;
     }
@@ -77,8 +85,31 @@ public class Turf {
         this.imageUrl = imageUrl;
     }
 
-    // toString override for easy logging
+    public String getDescription() {
+        return description;
+    }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getFacilities() {
+        return facilities;
+    }
+
+    public void setFacilities(String facilities) {
+        this.facilities = facilities;
+    }
+
+    public String getAvailableSlots() {
+        return availableSlots;
+    }
+
+    public void setAvailableSlots(String availableSlots) {
+        this.availableSlots = availableSlots;
+    }
+
+    // ToString for logging
     @Override
     public String toString() {
         return "Turf{" +
@@ -87,6 +118,9 @@ public class Turf {
                 ", location='" + location + '\'' +
                 ", pricePerHour=" + pricePerHour +
                 ", imageUrl='" + (imageUrl != null ? "[image-data]" : "null") + '\'' +
+                ", description='" + description + '\'' +
+                ", facilities='" + facilities + '\'' +
+                ", availableSlots='" + availableSlots + '\'' +
                 '}';
     }
 }
