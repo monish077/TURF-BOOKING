@@ -10,20 +10,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class WhatsAppService {
 
-    // Twilio credentials
-   @Value("${twilio.accountSid}")
-private String accountSid;
+    // Twilio credentials from application.properties
+    @Value("${twilio.accountSid}")
+    private String accountSid;
 
-@Value("${twilio.authToken}")
-private String authToken;
+    @Value("${twilio.authToken}")
+    private String authToken;
 
+    @Value("${twilio.fromNumber}")
+    private String fromNumber;
 
-
-    // Twilio Sandbox WhatsApp Number
-    private static final String FROM_NUMBER = "whatsapp:+14155238886";
-
-    static {
-        Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+    @PostConstruct
+    public void initTwilio() {
+        Twilio.init(accountSid, authToken);
     }
 
     public void sendBookingConfirmation(String toWhatsAppNumber, String userName, String turfName, String date, String slot) {
