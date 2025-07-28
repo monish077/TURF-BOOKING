@@ -25,25 +25,25 @@
 
     <dependencies>
 
-        <!-- ✅ Spring Boot Web -->
+        <!-- ✅ Spring Boot Web for REST APIs -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- ✅ Spring Boot JPA -->
+        <!-- ✅ Spring Data JPA for ORM -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- ✅ Spring Boot Security -->
+        <!-- ✅ Spring Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- ✅ Spring Boot Mail -->
+        <!-- ✅ Spring Mail -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
@@ -55,14 +55,14 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- ✅ MySQL Driver -->
+        <!-- ✅ MySQL JDBC Driver -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ✅ JWT (JJWT) -->
+        <!-- ✅ JWT Authentication (JJWT 0.11.5) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -81,14 +81,14 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ✅ Lombok (for reducing boilerplate code) -->
+        <!-- ✅ Lombok (optional, for reducing boilerplate) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
 
-        <!-- ✅ Spring Boot Testing -->
+        <!-- ✅ Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -114,3 +114,4 @@
     </build>
 
 </project>
+
