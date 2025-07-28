@@ -1,34 +1,46 @@
 import React, { useState } from "react";
-import { registerAdmin } from "../services/Api";
+import { loginUser } from "../services/Api";
 import "../assets/styles/home.css";
 import { Link, useNavigate } from "react-router-dom";
 import turfImg from "../assets/images/turffield.jpg";
 
-function AdminRegister() {
+function Login() {
   const navigate = useNavigate();
-  const [adminName, setAdminName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     try {
-      const response = await registerAdmin({
-        name: adminName,
-        email,
-        password,
-      });
+      const response = await loginUser({ email, password });
 
-      if (response.status === 200 || response.status === 201) {
-        console.log("Admin Registered:", response.data);
-        navigate("/admin-login");
+      if (response.status === 200 && response.data) {
+        const { token, role, email: userEmail } = response.data;
+
+        // ✅ Store user info
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("email", userEmail);
+        sessionStorage.setItem("role", role);
+
+        console.log("✅ Logged in:", { userEmail, role, token });
+
+        // ✅ Redirect based on role
+        if (role === "ADMIN") {
+          navigate("/admin/dashboard");
+        } else if (role === "USER") {
+          navigate("/slot");
+        } else {
+          setError("Unknown role");
+        }
       } else {
-        setError("Admin registration failed ❌");
+        setError("Invalid credentials ❌");
       }
     } catch (err) {
-      setError("Admin registration failed ❌");
+      console.error("❌ Login error:", err);
+      setError(err.response?.data?.error || "Login failed. Please try again.");
     }
   };
 
@@ -36,20 +48,9 @@ function AdminRegister() {
     <div className="container">
       <div className="left-section">
         <h1>MARS ARENA</h1>
-        <h2>Create Admin Account</h2>
+        <h2>Welcome back!</h2>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name*</label>
-            <input
-              type="text"
-              placeholder="Enter your full name"
-              value={adminName}
-              onChange={(e) => setAdminName(e.target.value)}
-              required
-            />
-          </div>
-
           <div className="form-group">
             <label>Email*</label>
             <input
@@ -65,22 +66,31 @@ function AdminRegister() {
             <label>Password*</label>
             <input
               type="password"
-              placeholder="Create a password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          <div className="form-group" style={{ marginBottom: "10px" }}>
+            <Link
+              to="/forgot-password"
+              style={{ fontSize: "14px", color: "#3498db", textDecoration: "none" }}
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
+          {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
 
           <button type="submit" className="login-btn">
-            Register Admin
+            Log In
           </button>
         </form>
 
         <p className="signup-link">
-          Already have an admin account? <Link to="/admin-login">Log In</Link>
+          Don’t have an account? <Link to="/register">Create account</Link>
         </p>
       </div>
 
@@ -91,4 +101,4 @@ function AdminRegister() {
   );
 }
 
-export default AdminRegister;
+export default Login;

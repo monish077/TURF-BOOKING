@@ -1,3 +1,4 @@
+/* Reset & Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,104 +7,106 @@
 
 body, html, #root {
   height: 100%;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0d1117;
 }
 
+/* Container */
 .container {
   display: flex;
   min-height: 100vh;
+  flex-wrap: wrap;
 }
 
+/* Left Panel */
 .left-section {
   width: 50%;
   background-color: #0f291f;
-  color: white;
+  color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 48px;
+  padding: 60px 50px;
 }
 
 .left-section h1 {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: bold;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  color: #ffffff;
+  text-align: center;
 }
 
 .left-section h2 {
   font-size: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  font-weight: 500;
+  text-align: center;
 }
 
-.google-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #d1d5db;
-  padding: 8px 16px;
-  border-radius: 4px;
-  background-color: white;
-  color: black;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.google-btn:hover {
-  background-color: #e5e7eb;
-}
-
-.google-icon {
-  width: 20px;
-  height: 20px;
-}
-
-.separator {
-  margin: 24px 0;
-  color: #9ca3af;
-}
-
+/* Form Styling */
 .login-form {
   width: 100%;
-  max-width: 320px;
+  max-width: 360px;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.custom-select {
   width: 100%;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 15px;
   background-color: #1f2937;
   border: 1px solid #4b5563;
   color: white;
+  transition: 0.3s ease;
 }
 
+.custom-select {
+  appearance: none;
+}
+
+.custom-select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #00b894;
+  box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.3);
+}
+
+/* Button */
 .login-btn {
   width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  background-color: white;
-  color: black;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: #00b894;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .login-btn:hover {
-  background-color: #e5e7eb;
+  background-color: #019874;
 }
 
+/* Link Text */
 .signup-link {
-  margin-top: 16px;
+  margin-top: 20px;
   font-size: 14px;
+  text-align: center;
 }
 
 .signup-link a {
@@ -115,12 +118,92 @@ body, html, #root {
   text-decoration: underline;
 }
 
+/* Right Panel */
 .right-section {
   width: 50%;
+  background-image: url("../images/turffield.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .right-section img {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   object-fit: cover;
+}
+
+/* ✅ Responsive Enhancements */
+@media (max-width: 1024px) {
+  .left-section h1 {
+    font-size: 28px;
+  }
+
+  .left-section h2 {
+    font-size: 18px;
+  }
+
+  .login-btn {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .left-section,
+  .right-section {
+    width: 100%;
+    height: auto;
+    padding: 40px 20px;
+  }
+
+  .right-section {
+    order: -1;
+    height: 240px;
+  }
+
+  .form-group input,
+  .custom-select {
+    font-size: 14px;
+    padding: 9px;
+  }
+
+  .login-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .signup-link {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .left-section h1 {
+    font-size: 24px;
+  }
+
+  .left-section h2 {
+    font-size: 16px;
+  }
+
+  .login-form {
+    max-width: 100%;
+  }
+
+  .right-section {
+    height: 200px;
+  }
+
+  .login-btn {
+    font-size: 13px;
+    padding: 9px;
+  }
+
+  .signup-link {
+    font-size: 12px;
+  }
 }

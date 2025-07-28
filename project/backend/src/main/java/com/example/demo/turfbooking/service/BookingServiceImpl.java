@@ -1,13 +1,12 @@
 package com.example.demo.turfbooking.service;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.example.demo.turfbooking.entity.Booking;
+import com.example.demo.turfbooking.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.turfbooking.entity.Booking;
-import com.example.demo.turfbooking.repository.BookingRepository;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -32,14 +31,14 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> getBookingsByTurfId(Long turfId) {
+        System.out.println("Fetching from DB for turfId = " + turfId); // Debug log
         return bookingRepository.findByTurfId(turfId);
     }
 
     @Override
-public List<Booking> getBookingsByUserEmail(String email) {
-    return bookingRepository.findByUserEmail(email);
-}
-
+    public List<Booking> getBookingsByUserEmail(String email) {
+        return bookingRepository.findByUserEmail(email);
+    }
 
     @Override
     public void deleteBooking(Long id) {

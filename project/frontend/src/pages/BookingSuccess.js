@@ -6,6 +6,7 @@ import "../assets/styles/bookingsuccess.css";
 const BookingSuccess = () => {
   const { id } = useParams();
   const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -13,12 +14,20 @@ const BookingSuccess = () => {
         const response = await getBookingById(id);
         setBooking(response.data);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to fetch booking:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchBooking();
+    if (id) {
+      fetchBooking();
+    }
   }, [id]);
+
+  if (loading) {
+    return <div className="success-page"><p>Loading booking details...</p></div>;
+  }
 
   return (
     <div className="success-page">
@@ -26,16 +35,20 @@ const BookingSuccess = () => {
         <h2>✅ Booking Confirmed!</h2>
         <p>Thank you for booking with us.</p>
 
-        {booking && (
+        {booking ? (
           <div className="success-details">
-            <p><b>Name:</b> {booking.name}</p>
+            <p><b>Name:</b> {booking.userName}</p>
             <p><b>Email:</b> {booking.userEmail}</p>
             <p><b>Date:</b> {booking.date}</p>
-            <p><b>Time:</b> {booking.time}</p>
+            <p><b>Time:</b> {booking.slot}</p>
+            <p><b>Price:</b> ₹{booking.price}</p>
+            <p><b>Turf:</b> {booking.turfName}</p>
           </div>
+        ) : (
+          <p style={{ color: "red" }}>Booking not found.</p>
         )}
 
-        <Link to="/slots" className="go-home-btn">Go to Slots</Link>
+        <Link to="/slot" className="go-home-btn">Go to Slots</Link>
       </div>
     </div>
   );

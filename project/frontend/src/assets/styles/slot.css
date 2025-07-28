@@ -1,3 +1,14 @@
+/* Reset box model and global font */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+
 /* Main Slots Page Layout */
 .slots-page {
   background: linear-gradient(to bottom right, #0f2d26, #163831);
@@ -6,29 +17,78 @@
   flex-direction: column;
   color: white;
   padding: 20px 40px;
-  font-family: Arial, sans-serif;
+}
+/* Navbar Styling */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-radius: 10px;
+  position: relative;
 }
 
-/* Content wrapper inside slots-page */
-.slots-content {
-  flex: 1;
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: white;
+}
+
+/* Centered nav links container */
+.center-nav {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nav-links {
   display: flex;
-  flex-direction: column;
+  gap: 30px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #66ff99;
+}
+
+
+.book-btn {
+  background-color: #66ff99;
+  color: #000;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.book-btn:hover {
+  background-color: #52e086;
 }
 
 /* Header section styling */
 .slots-header {
   max-width: 1000px;
-  margin: 100px auto 30px auto;
+  margin: 80px auto 30px auto;
+  text-align: center;
 }
 
 .slots-header h2 {
-  font-size: 28px;
+  font-size: 32px;
   margin-bottom: 10px;
+  color: #ffffff;
 }
 
 .slots-header p {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   color: #d4d4d4;
 }
@@ -56,6 +116,8 @@
   margin-top: 20px;
   display: flex;
   gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .filter-sort button {
@@ -80,6 +142,7 @@
   gap: 25px;
   max-width: 1200px;
   margin: 30px auto;
+  padding-bottom: 40px;
 }
 
 /* Turf card styles */
@@ -98,7 +161,7 @@
 
 .turf-card img {
   width: 100%;
-  height: 150px;
+  height: 160px;
   object-fit: cover;
   border-radius: 6px;
 }
@@ -113,19 +176,23 @@
   margin-bottom: 10px;
 }
 
-.turf-card .book-now {
-  background-color: white;
-  color: black;
+/* Book Now button */
+.book-now-btn {
+  margin-top: 12px;
+  padding: 10px 24px;
+  background-color: #fafafa;
   border: none;
-  padding: 8px 18px;
-  border-radius: 5px;
+  border-radius: 8px;
+  color: #030202;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
 
-.turf-card .book-now:hover {
-  background-color: #dddddd;
+.book-now-btn:hover {
+  background-color: #45a049;
+  color: white;
 }
 
 /* Footer style */
@@ -137,21 +204,3 @@
   font-size: 14px;
   margin-top: 30px;
 }
-
-.book-now-btn {
-  margin-top: 12px;
-  padding: 10px 24px;
-  background-color: #fafafa;
-  border: none;
-  border-radius: 8px;
-  color: #030202;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.book-now-btn:hover {
-  background-color: #45a049;
-}
-

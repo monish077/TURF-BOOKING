@@ -6,55 +6,74 @@ import "../assets/styles/turfdetails.css";
 const TurfDetails = () => {
   const { id } = useParams();
   const [turf, setTurf] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTurf();
-  }, []);
+    const fetchTurf = async () => {
+      try {
+        const token = sessionStorage.getItem("token"); // ✅ Get token
 
-  const fetchTurf = async () => {
-    try {
-      const response = await axios.get(`http://localhost:8080/api/turfs/${id}`);
-      setTurf(response.data);
-    } catch (error) {
-      console.error("Error fetching turf:", error);
-    }
-  };
+        const response = await axios.get(
+          `http://localhost:8080/api/turfs/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // ✅ Set header
+            },
+          }
+        );
+        setTurf(response.data);
+      } catch (error) {
+        console.error("Error fetching turf:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTurf();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="turf-details-page">
+        <h2>Loading Turf Details...</h2>
+      </div>
+    );
+  }
 
   if (!turf) {
     return (
       <div className="turf-details-page">
         <h2>Turf Not Found</h2>
-        <Link to="/slots" className="back-link">← Back to Slots</Link>
+        <Link to="/slot" className="back-link">← Back to Slots</Link>
       </div>
     );
   }
 
   return (
     <div className="turf-details-page">
-      <Link to="/slots" className="back-link">← Back to Slots</Link>
+      <Link to="/slot" className="back-link">← Back to Slots</Link>
 
       <div className="turf-card-details">
         <img src={turf.imageUrl} alt={turf.name} className="turf-card-image" />
 
         <div className="turf-card-info">
           <h2>{turf.name}</h2>
-          <p><b>Price:</b> ₹{turf.pricePerHour} / hour</p>
-          <p><b>Location:</b> {turf.location}</p>
-          <p><b>Description:</b> A well-lit turf with lush synthetic grass, perfect for 5-a-side football matches and cricket nets.</p>
+          <p><strong>Price:</strong> ₹{turf.pricePerHour} / hour</p>
+          <p><strong>Location:</strong> {turf.location}</p>
+          <p><strong>Description:</strong> {turf.description}</p>
 
           <h3>Available Slots:</h3>
           <ul>
-            <li>6:00 AM - 7:00 AM</li>
-            <li>7:00 AM - 8:00 AM</li>
-            <li>5:00 PM - 6:00 PM</li>
+            {turf.availableSlots?.split(",").map((slot, idx) => (
+              <li key={idx}>{slot.trim()}</li>
+            ))}
           </ul>
 
           <h3>Facilities:</h3>
           <ul>
-            <li>Restroom</li>
-            <li>Seating Area</li>
-            <li>Cafeteria</li>
-            <li>LED Lights</li>
+            {turf.facilities?.split(",").map((facility, idx) => (
+              <li key={idx}>{facility.trim()}</li>
+            ))}
           </ul>
 
           <Link to={`/book/${turf.id}`}>

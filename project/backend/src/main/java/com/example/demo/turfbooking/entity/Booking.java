@@ -1,17 +1,10 @@
 package com.example.demo.turfbooking.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(name = "bookings")  // JPA table name
+@Table(name = "bookings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,13 +15,24 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
     private String userName;
-    private String userEmail;
-    private String whatsappNumber;  // 🆕 New field
 
+    @Column
+    private String userEmail;
+
+    @Column
     private Long turfId;
+
+    @Column
     private String turfName;
+
+    @Column
     private String date;
+
+    @Column
     private String slot;
+
+    @Column
     private double price;
 }

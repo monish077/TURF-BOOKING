@@ -1,9 +1,9 @@
 package com.example.demo.turfbooking.service;
 
+import com.example.demo.turfbooking.entity.Booking;
+
 import java.util.List;
 import java.util.Optional;
-
-import com.example.demo.turfbooking.entity.Booking;
 
 public interface BookingService {
     Booking createBooking(Booking booking);

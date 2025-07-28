@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../assets/styles/bookingform.css";
-import { createBooking, getBookingsByTurfId, getTurfById } from "../services/Api";
 
 const generateSlots = () => {
   const slots = [];
@@ -19,7 +19,6 @@ const BookingForm = () => {
 
   const [formData, setFormData] = useState({
     userName: "",
-    whatsappNumber: "",
     date: "",
     slot: ""
   });
@@ -35,22 +34,38 @@ const BookingForm = () => {
     return today.toISOString().split("T")[0];
   };
 
+  const getTokenConfig = () => {
+    const token = sessionStorage.getItem("token");
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      withCredentials: true
+    };
+  };
+
   const updateBookings = useCallback(async () => {
     try {
-      const res = await getBookingsByTurfId(id);
+      const res = await axios.get(
+        `http://localhost:8080/api/bookings/turf/${id}`,
+        getTokenConfig()
+      );
+
       const turfBookings = res.data;
 
       const dateCounts = turfBookings.reduce((acc, booking) => {
         acc[booking.date] = (acc[booking.date] || 0) + 1;
         return acc;
       }, {});
-      const fullDates = Object.keys(dateCounts).filter(date => dateCounts[date] >= 24);
+      const fullDates = Object.keys(dateCounts).filter(
+        (date) => dateCounts[date] >= 24
+      );
       setDisabledDates(fullDates);
 
       if (formData.date) {
         const bookedForDate = turfBookings
-          .filter(booking => booking.date === formData.date)
-          .map(booking => booking.slot);
+          .filter((booking) => booking.date === formData.date)
+          .map((booking) => booking.slot);
         setBookedSlots(bookedForDate);
       }
     } catch (err) {
@@ -63,7 +78,10 @@ const BookingForm = () => {
 
     const fetchTurfDetails = async () => {
       try {
-        const res = await getTurfById(id);
+        const res = await axios.get(
+          `http://localhost:8080/api/turfs/${id}`,
+          getTokenConfig()
+        );
         const turf = res.data;
         setTurfName(turf.name);
         setTurfPrice(turf.pricePerHour);
@@ -80,12 +98,12 @@ const BookingForm = () => {
 
     if (name === "date" && disabledDates.includes(value)) {
       alert("This date is fully booked. Please choose another date.");
-      setFormData(prev => ({ ...prev, date: "" }));
+      setFormData((prev) => ({ ...prev, date: "" }));
       setBookedSlots([]);
       return;
     }
 
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -93,29 +111,28 @@ const BookingForm = () => {
     setIsSubmitting(true);
 
     try {
-      const loggedInUser = JSON.parse(sessionStorage.getItem("loggedInUser"));
-      const userEmail = loggedInUser?.email;
+      const userEmail = sessionStorage.getItem("email");
 
       if (!userEmail) {
         alert("User not logged in.");
         return;
       }
 
-      // ✅ Sanitize WhatsApp number: keep only digits
-      const sanitizedWhatsApp = formData.whatsappNumber.replace(/\D/g, "");
-
       const bookingData = {
         ...formData,
-        whatsappNumber: sanitizedWhatsApp,
-        userEmail: userEmail,
+        userEmail,
         turfId: id,
-        turfName: turfName,
+        turfName,
         price: turfPrice
       };
 
-      const res = await createBooking(bookingData);
-      const newBookingId = res.data.id;
+      const res = await axios.post(
+        `http://localhost:8080/api/bookings`,
+        bookingData,
+        getTokenConfig()
+      );
 
+      const newBookingId = res.data.id;
       navigate(`/payment/${newBookingId}`);
     } catch (err) {
       console.error("Booking failed ❌", err);
@@ -139,16 +156,6 @@ const BookingForm = () => {
             name="userName"
             value={formData.userName}
             onChange={handleChange}
-            required
-          />
-
-          <label>WhatsApp Number:</label>
-          <input
-            type="tel"
-            name="whatsappNumber"
-            value={formData.whatsappNumber}
-            onChange={handleChange}
-            placeholder="e.g. +91 8667541251"
             required
           />
 

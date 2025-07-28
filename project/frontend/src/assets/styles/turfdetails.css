@@ -1,33 +1,38 @@
+/* Global Reset & Background */
 body, html {
   margin: 0;
   padding: 0;
   height: 100%;
   background-color: #121e13;
+  font-family: 'Poppins', sans-serif;
 }
 
+/* Page Container */
 .turf-details-page {
   min-height: 100vh;
   width: 100%;
-  padding: 100px;
+  padding: 100px 40px;
   box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
   background-color: #121e13;
   color: #eee;
-  
+  animation: fadeIn 0.5s ease;
 }
 
+/* Back Link */
 .back-link {
   display: inline-block;
   margin-bottom: 20px;
   color: #4caf50;
   text-decoration: none;
   font-weight: 500;
+  font-size: 16px;
 }
 
 .back-link:hover {
   text-decoration: underline;
 }
 
+/* Turf Card Layout */
 .turf-card-details {
   background: #1b2a19;
   border-radius: 16px;
@@ -38,13 +43,15 @@ body, html {
   margin-bottom: 50px;
 }
 
+/* Turf Image */
 .turf-card-details img {
   width: 50%;
-  object-fit: cover;
   height: 400px;
+  object-fit: cover;
   border-right: 1px solid #2e4527;
 }
 
+/* Turf Info */
 .turf-card-info {
   padding: 30px;
   width: 50%;
@@ -76,6 +83,7 @@ body, html {
   color: #c2ff97;
 }
 
+/* Book Button */
 .book-btn {
   margin-top: 20px;
   padding: 12px 25px;
@@ -92,11 +100,31 @@ body, html {
   background-color: #43a047;
 }
 
-.turf-details-page {
-  animation: fadeIn 0.5s ease;
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Responsive Design */
+@media (max-width: 768px) {
+  .turf-card-details {
+    flex-direction: column;
+  }
+
+  .turf-card-details img,
+  .turf-card-info {
+    width: 100%;
+    border-right: none;
+  }
+
+  .turf-details-page {
+    padding: 80px 20px;
+  }
 }

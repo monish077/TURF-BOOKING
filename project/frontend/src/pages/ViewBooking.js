@@ -4,24 +4,29 @@ import "../assets/styles/viewbookings.css";
 
 const ViewBookings = () => {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchBookings = async () => {
-    const loggedInUser = JSON.parse(sessionStorage.getItem("loggedInUser"));
-    const userEmail = loggedInUser?.email;
-    if (!userEmail) return;
+    const userEmail = sessionStorage.getItem("email");
+    if (!userEmail) {
+      console.warn("No email found in sessionStorage");
+      return;
+    }
 
     try {
       const res = await getBookingsByUserEmail(userEmail);
       setBookings(res.data);
     } catch (err) {
-      console.error("Failed to fetch bookings:", err);
+      console.error("❌ Failed to fetch bookings:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCancel = async (id) => {
     if (window.confirm("Are you sure you want to cancel this booking?")) {
       await deleteBooking(id);
-      fetchBookings();
+      fetchBookings(); // refresh
     }
   };
 
@@ -32,7 +37,10 @@ const ViewBookings = () => {
   return (
     <div className="view-bookings-page">
       <h2>Your Bookings</h2>
-      {bookings.length > 0 ? (
+
+      {loading ? (
+        <p>Loading bookings...</p>
+      ) : bookings.length > 0 ? (
         <table>
           <thead>
             <tr>

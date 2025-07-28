@@ -14,13 +14,13 @@ const Slot = () => {
 
         const turfsWithImages = backendTurfs.map((turf) => ({
           ...turf,
-          image: turf.imageUrl, 
-          price: `₹${turf.pricePerHour}`,
+          image: turf.imageUrl || "/default-turf.jpg", // fallback if image missing
+          price: `₹${turf.pricePerHour || 0}`,
         }));
 
         setAllTurfs(turfsWithImages);
       } catch (error) {
-        console.error("Error fetching turfs from backend:", error);
+        console.error("❌ Error fetching turfs:", error);
       }
     };
 
@@ -29,22 +29,17 @@ const Slot = () => {
 
   return (
     <div className="slots-page">
+      {/* Navbar */}
       <nav className="navbar">
         <div className="logo">MARS ARENA</div>
         <ul className="nav-links">
-          <li>
-            <a href="/">Home</a>
-          </li>
-          <li>
-            <Link to="/view-bookings">My Booking Details</Link>
-          </li>
-          <li>
-            <a href="/contact">Contact</a>
-          </li>
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/view-bookings">My Bookings</Link></li>
+          <li><Link to="/contact">Contact</Link></li>
         </ul>
-        <button className="book-btn">Book Now</button>
       </nav>
 
+      {/* Page Header */}
       <div className="slots-header">
         <h2>🎯 Find Your Perfect Play!</h2>
         <p>
@@ -52,18 +47,23 @@ const Slot = () => {
         </p>
       </div>
 
+      {/* Turf Grid */}
       <div className="turf-grid">
-        {allTurfs.map((turf, index) => (
-          <div className="turf-card" key={index}>
-            <img src={turf.image} alt={turf.name} />
-            <h4>{turf.name}</h4>
-            <p>{turf.price} / hour</p>
-            <p>{turf.location}</p>
-            <Link to={`/turfs/${turf.id}`}>
-              <button className="book-now-btn">Book Now</button>
-            </Link>
-          </div>
-        ))}
+        {allTurfs.length > 0 ? (
+          allTurfs.map((turf) => (
+            <div className="turf-card" key={turf.id}>
+              <img src={turf.image} alt={turf.name} />
+              <h4>{turf.name}</h4>
+              <p>{turf.price} / hour</p>
+              <p>{turf.location}</p>
+              <Link to={`/turfs/${turf.id}`}>
+                <button className="book-now-btn">Book Now</button>
+              </Link>
+            </div>
+          ))
+        ) : (
+          <p className="loading-text">Loading turfs...</p>
+        )}
       </div>
     </div>
   );
