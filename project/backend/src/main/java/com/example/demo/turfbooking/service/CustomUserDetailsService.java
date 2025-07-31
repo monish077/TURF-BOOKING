@@ -1,5 +1,6 @@
 package com.example.demo.turfbooking.service;
 
+import com.example.demo.turfbooking.entity.Role;
 import com.example.demo.turfbooking.entity.User;
 import com.example.demo.turfbooking.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +19,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
 
     /**
-     * ✅ Load user by email for Spring Security
+     * ✅ Load user by email (username) for Spring Security
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // 🔍 Check for null or empty email
         if (email == null || email.trim().isEmpty()) {
             throw new UsernameNotFoundException("Email must not be null or empty");
         }
@@ -33,15 +33,20 @@ public class CustomUserDetailsService implements UserDetailsService {
                         new UsernameNotFoundException("User not found with email: " + email)
                 );
 
-        // ❌ Block if user is not verified
+        // ❌ Block unverified accounts
         if (!user.isEnabled()) {
             throw new DisabledException("Email not verified. Please verify before login.");
         }
 
-        // ✅ Create authority (Spring expects "ROLE_" prefix)
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+        // ✅ Guard against null role
+        Role role = user.getRole();
+        if (role == null) {
+            throw new UsernameNotFoundException("User role is not set for email: " + email);
+        }
 
-        // ✅ Return Spring Security's User object
+        // ✅ Spring expects roles prefixed with "ROLE_"
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role.name());
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),

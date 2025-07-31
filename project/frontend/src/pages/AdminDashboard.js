@@ -17,10 +17,15 @@ const AdminDashboard = () => {
   const [editingTurfId, setEditingTurfId] = useState(null);
 
   const navigate = useNavigate();
+  const adminEmail = sessionStorage.getItem("email"); // 👈 Get admin's email
 
   const fetchTurfs = async () => {
-    const res = await getAllTurfs();
-    setTurfs(res.data);
+    try {
+      const res = await getAllTurfs(adminEmail); // 👈 Filter by email
+      setTurfs(res.data);
+    } catch (err) {
+      console.error("Error fetching turfs:", err);
+    }
   };
 
   useEffect(() => {
@@ -48,9 +53,11 @@ const AdminDashboard = () => {
         await updateTurf(editingTurfId, newTurf);
         alert("Turf updated successfully!");
       } else {
-        await addTurf(newTurf);
+        const turfWithOwner = { ...newTurf, ownerEmail: adminEmail }; // 👈 Add ownerEmail
+        await addTurf(turfWithOwner);
         alert("Turf added successfully!");
       }
+
       setNewTurf({
         name: "",
         location: "",
@@ -70,8 +77,12 @@ const AdminDashboard = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this turf?")) {
-      await deleteTurf(id);
-      fetchTurfs();
+      try {
+        await deleteTurf(id);
+        fetchTurfs();
+      } catch (err) {
+        console.error("Error deleting turf:", err);
+      }
     }
   };
 
@@ -113,22 +124,26 @@ const AdminDashboard = () => {
 
       <div className="turf-list">
         <h3>Existing Turfs</h3>
-        {turfs.map((turf) => (
-          <div className="turf-card" key={turf.id}>
-            <img src={turf.imageUrl} alt={turf.name} />
-            <h4>{turf.name}</h4>
-            <p>{turf.location}</p>
-            <p>₹{turf.pricePerHour} / hour</p>
-            <div className="btn-group">
-              <button className="edit-btn" onClick={() => handleEdit(turf)}>
-                Edit
-              </button>
-              <button className="delete-btn" onClick={() => handleDelete(turf.id)}>
-                Delete
-              </button>
+        {turfs.length === 0 ? (
+          <p>No turfs found for your account.</p>
+        ) : (
+          turfs.map((turf) => (
+            <div className="turf-card" key={turf.id}>
+              <img src={turf.imageUrl} alt={turf.name} />
+              <h4>{turf.name}</h4>
+              <p>{turf.location}</p>
+              <p>₹{turf.pricePerHour} / hour</p>
+              <div className="btn-group">
+                <button className="edit-btn" onClick={() => handleEdit(turf)}>
+                  Edit
+                </button>
+                <button className="delete-btn" onClick={() => handleDelete(turf.id)}>
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

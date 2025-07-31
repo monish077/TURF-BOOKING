@@ -5,13 +5,13 @@ import com.example.demo.turfbooking.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.*;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.*;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -27,9 +27,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> {}) // Enable CORS with default settings
+            .cors(cors -> {}) // Enable CORS
+
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints (no auth required)
+                // Public endpoints
                 .requestMatchers(
                     "/api/users/register",
                     "/api/users/login",
@@ -37,22 +38,26 @@ public class SecurityConfig {
                     "/api/users/email-verified",
                     "/api/users/forgot-password",
                     "/api/users/reset-password",
-                    "/api/users/test-mail"
+                    "/api/users/test-mail",
+                    "/test/**"
                 ).permitAll()
 
-                // ✅ These now check against ROLE_ prefixed authorities
+                // Role-based endpoints
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
-                .requestMatchers("/api/bookings/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
-                .requestMatchers("/api/turfs/**").permitAll() // (optional) if turf view is public
+                .requestMatchers("/api/bookings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
 
-                // All other requests require authentication
+                // Public access to turf browsing
+                .requestMatchers("/api/turfs/**").permitAll()
+
+                // All other requests must be authenticated
                 .anyRequest().authenticated()
             )
-            // Stateless session (required for JWT)
+
+            // Stateless session management
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // JWT filter before UsernamePasswordAuthenticationFilter
+            // Add JWT filter before username/password filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -60,11 +65,11 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // For encoding passwords securely
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager(); // Needed for authentication
+        return config.getAuthenticationManager();
     }
 }

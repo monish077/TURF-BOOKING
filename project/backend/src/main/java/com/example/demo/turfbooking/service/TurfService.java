@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.turfbooking.entity.Turf;
+import com.example.demo.turfbooking.entity.User;
 import com.example.demo.turfbooking.repository.TurfRepository;
 
 @Service
@@ -19,22 +20,27 @@ public class TurfService {
         this.turfRepo = turfRepo;
     }
 
-    // Get all turfs
+    // ✅ Get all turfs (for testing or full admin access if needed)
     public List<Turf> getAllTurfs() {
         return turfRepo.findAll();
     }
 
-    // Get turf by ID
+    // ✅ Get turfs owned by a specific admin
+    public List<Turf> getTurfsByAdmin(User admin) {
+        return turfRepo.findByAdmin(admin);
+    }
+
+    // ✅ Get turf by ID
     public Optional<Turf> getTurfById(Long id) {
         return turfRepo.findById(id);
     }
 
-    // Add new turf
+    // ✅ Add new turf
     public Turf addTurf(Turf turf) {
         return turfRepo.save(turf);
     }
 
-    // Delete turf by ID
+    // ✅ Delete turf by ID
     public boolean deleteTurf(Long id) {
         if (turfRepo.existsById(id)) {
             turfRepo.deleteById(id);
@@ -43,13 +49,16 @@ public class TurfService {
         return false;
     }
 
-    // Update existing turf
+    // ✅ Update existing turf
     public Turf updateTurf(Long id, Turf updatedTurf) {
         return turfRepo.findById(id).map(existingTurf -> {
             existingTurf.setName(updatedTurf.getName());
             existingTurf.setLocation(updatedTurf.getLocation());
             existingTurf.setPricePerHour(updatedTurf.getPricePerHour());
             existingTurf.setImageUrl(updatedTurf.getImageUrl());
+            existingTurf.setDescription(updatedTurf.getDescription());
+            existingTurf.setFacilities(updatedTurf.getFacilities());
+            existingTurf.setAvailableSlots(updatedTurf.getAvailableSlots());
             return turfRepo.save(existingTurf);
         }).orElse(null);
     }

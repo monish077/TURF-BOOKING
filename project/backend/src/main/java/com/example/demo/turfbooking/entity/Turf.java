@@ -28,11 +28,13 @@ public class Turf {
     @Column(name = "available_slots", columnDefinition = "TEXT")
     private String availableSlots;
 
-    // Default constructor
-    public Turf() {
-    }
+    // ✅ NEW: Link Turf to the Admin who created it
+    @ManyToOne
+    @JoinColumn(name = "admin_id")
+    private User admin;
 
-    // All-args constructor
+    public Turf() {}
+
     public Turf(String name, String location, double pricePerHour, String imageUrl,
                 String description, String facilities, String availableSlots) {
         this.name = name;
@@ -44,7 +46,8 @@ public class Turf {
         this.availableSlots = availableSlots;
     }
 
-    // Getters and Setters
+    // ===== Getters and Setters =====
+
     public Long getId() {
         return id;
     }
@@ -109,7 +112,14 @@ public class Turf {
         this.availableSlots = availableSlots;
     }
 
-    // ToString for logging
+    public User getAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(User admin) {
+        this.admin = admin;
+    }
+
     @Override
     public String toString() {
         return "Turf{" +
@@ -117,10 +127,11 @@ public class Turf {
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", pricePerHour=" + pricePerHour +
-                ", imageUrl='" + (imageUrl != null ? "[image-data]" : "null") + '\'' +
+                ", imageUrl='" + imageUrl + '\'' +
                 ", description='" + description + '\'' +
                 ", facilities='" + facilities + '\'' +
                 ", availableSlots='" + availableSlots + '\'' +
+                ", admin=" + (admin != null ? admin.getEmail() : "null") +
                 '}';
     }
 }

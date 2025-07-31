@@ -1,34 +1,52 @@
 import React, { useEffect, useState } from "react";
-import { getAllBookings, deleteBooking } from "../services/Api";
+import { getAdminBookings, deleteBooking } from "../services/Api";
 import "../assets/styles/viewbookings.css";
 
 const AdminViewBookings = () => {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Admin email from sessionStorage
+  const adminEmail = sessionStorage.getItem("email");
 
   const fetchBookings = async () => {
     try {
-      const res = await getAllBookings();
+      setLoading(true);
+      const res = await getAdminBookings(adminEmail); // ✅ use email as param
       setBookings(res.data);
     } catch (err) {
-      console.error("Failed to fetch bookings:", err);
+      console.error("❌ Failed to fetch admin bookings:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCancel = async (id) => {
     if (window.confirm("Are you sure you want to cancel this booking?")) {
-      await deleteBooking(id);
-      fetchBookings();
+      try {
+        await deleteBooking(id);
+        fetchBookings(); // refresh list
+      } catch (err) {
+        console.error("❌ Error cancelling booking:", err);
+      }
     }
   };
 
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    if (adminEmail) {
+      fetchBookings();
+    } else {
+      console.warn("⚠️ Admin email not found in sessionStorage.");
+      setLoading(false);
+    }
+  }, [adminEmail]);
 
   return (
     <div className="view-bookings-page">
-      <h2>All Turf Bookings (Admin)</h2>
-      {bookings.length > 0 ? (
+      <h2>📅 My Turf Bookings (Admin View)</h2>
+      {loading ? (
+        <p>Loading bookings...</p>
+      ) : bookings.length > 0 ? (
         <table>
           <thead>
             <tr>
@@ -53,7 +71,10 @@ const AdminViewBookings = () => {
                 <td>{b.slot || "N/A"}</td>
                 <td>₹{b.price}</td>
                 <td>
-                  <button className="cancel-btn" onClick={() => handleCancel(b.id)}>
+                  <button
+                    className="cancel-btn"
+                    onClick={() => handleCancel(b.id)}
+                  >
                     Cancel
                   </button>
                 </td>
@@ -62,7 +83,7 @@ const AdminViewBookings = () => {
           </tbody>
         </table>
       ) : (
-        <p>No bookings found.</p>
+        <p>No bookings found for your turfs.</p>
       )}
     </div>
   );

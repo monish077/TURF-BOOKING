@@ -1,22 +1,17 @@
 package com.example.demo.turfbooking.controller;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.demo.turfbooking.entity.Turf;
+import com.example.demo.turfbooking.entity.User;
+import com.example.demo.turfbooking.repository.UserRepository;
+import com.example.demo.turfbooking.service.TurfService;
+import com.example.demo.turfbooking.jwt.JwtUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.turfbooking.entity.Turf;
-import com.example.demo.turfbooking.service.TurfService;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/turfs")
@@ -24,35 +19,70 @@ import com.example.demo.turfbooking.service.TurfService;
 public class TurfController {
 
     private final TurfService turfService;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public TurfController(TurfService turfService) {
+    public TurfController(TurfService turfService, UserRepository userRepository, JwtUtil jwtUtil) {
         this.turfService = turfService;
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
+    // ❌ Admin only - not used in frontend
     @GetMapping
     public List<Turf> getAllTurfs() {
         return turfService.getAllTurfs();
     }
 
+    // ✅ PUBLIC: Slot page — returns all turfs
+    @GetMapping("/public")
+    public ResponseEntity<List<Turf>> getAllPublicTurfs() {
+        return ResponseEntity.ok(turfService.getAllTurfs());
+    }
+
+    // ✅ ADMIN: Get turfs by admin (JWT)
+    @GetMapping("/admin")
+    public ResponseEntity<?> getTurfsByAdmin(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String jwt = authHeader.replace("Bearer ", "");
+            String email = jwtUtil.extractUsername(jwt);
+
+            User admin = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+            List<Turf> adminTurfs = turfService.getTurfsByAdmin(admin);
+            return ResponseEntity.ok(adminTurfs);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error retrieving admin turfs: " + e.getMessage());
+        }
+    }
+
+    // ✅ Get single turf by ID — must come AFTER /public, /admin
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         try {
             Optional<Turf> turf = turfService.getTurfById(id);
-            if (turf.isPresent()) {
-                return ResponseEntity.ok(turf.get());
-            } else {
-                return ResponseEntity.status(404).body("Turf not found with ID: " + id);
-            }
+            return turf.<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(404).body("Turf not found with ID: " + id));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error retrieving turf: " + e.getMessage());
         }
     }
 
+    // ✅ Add turf (ADMIN only)
     @PostMapping
-    public ResponseEntity<String> addTurf(@RequestBody Turf turf) {
+    public ResponseEntity<String> addTurf(@RequestBody Turf turf, @RequestHeader("Authorization") String authHeader) {
         try {
+            String jwt = authHeader.replace("Bearer ", "");
+            String email = jwtUtil.extractUsername(jwt);
+
+            User admin = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+            turf.setAdmin(admin);
             turfService.addTurf(turf);
             return ResponseEntity.status(201).body("Turf added successfully");
         } catch (Exception e) {
@@ -61,6 +91,7 @@ public class TurfController {
         }
     }
 
+    // ✅ Update turf by ID
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTurf(@PathVariable Long id, @RequestBody Turf turf) {
         try {
@@ -76,6 +107,7 @@ public class TurfController {
         }
     }
 
+    // ✅ Delete turf
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTurf(@PathVariable Long id) {
         try {
@@ -91,6 +123,7 @@ public class TurfController {
         }
     }
 
+    // ✅ DB test endpoint
     @GetMapping("/test-db")
     public ResponseEntity<?> testDb() {
         try {

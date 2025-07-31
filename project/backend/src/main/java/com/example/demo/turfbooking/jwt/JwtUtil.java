@@ -4,8 +4,8 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +13,12 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
+
+    // ✅ Alias method for compatibility with controller
+public String extractUsername(String token) {
+    return extractEmail(token);
+}
+
 
     @Value("${jwt.secret}")
     private String secret;
@@ -22,14 +28,14 @@ public class JwtUtil {
 
     private SecretKey secretKey;
 
-    // ✅ Prepare secret key on startup
+    // ✅ Initialize the secret key on application startup
     @PostConstruct
     public void init() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        this.secretKey = Keys.hmacShaKeyFor(keyBytes); // HS512 key size
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes); // Uses HS512
     }
 
-    // ✅ Generate JWT with email and role
+    // ✅ Generate a JWT with email and role
     public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
@@ -40,21 +46,25 @@ public class JwtUtil {
                 .compact();
     }
 
-    // ✅ Extract all claims from token
+    // ✅ Extract all claims from a JWT token
     public Claims extractClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid or expired JWT token", e);
+        }
     }
 
-    // ✅ Extract email (subject) from token
+    // ✅ Extract email (subject) from JWT
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
     }
 
-    // ✅ Extract role
+    // ✅ Extract role from JWT
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
     }
@@ -64,9 +74,9 @@ public class JwtUtil {
         return extractClaims(token).getExpiration().before(new Date());
     }
 
-    // ✅ Validate token against UserDetails
+    // ✅ Validate token using UserDetails
     public boolean validateToken(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
-        return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 }

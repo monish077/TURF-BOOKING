@@ -11,5 +11,6 @@ public interface BookingService {
     Optional<Booking> getBookingById(Long id);
     List<Booking> getBookingsByTurfId(Long turfId);
     List<Booking> getBookingsByUserEmail(String email);
+    List<Booking> getBookingsByAdminEmail(String adminEmail); 
     void deleteBooking(Long id);
 }
