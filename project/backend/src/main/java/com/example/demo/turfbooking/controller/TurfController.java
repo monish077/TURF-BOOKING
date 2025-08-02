@@ -8,7 +8,9 @@ import com.example.demo.turfbooking.jwt.JwtUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +61,7 @@ public class TurfController {
         }
     }
 
-    // ✅ Get single turf by ID — must come AFTER /public, /admin
+    // ✅ Get single turf by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         try {
@@ -72,9 +74,9 @@ public class TurfController {
         }
     }
 
-    // ✅ Add turf (ADMIN only)
+    // ✅ Add turf (ADMIN only) — updated to return saved turf with ID
     @PostMapping
-    public ResponseEntity<String> addTurf(@RequestBody Turf turf, @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> addTurf(@RequestBody Turf turf, @RequestHeader("Authorization") String authHeader) {
         try {
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
@@ -83,11 +85,23 @@ public class TurfController {
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
 
             turf.setAdmin(admin);
-            turfService.addTurf(turf);
-            return ResponseEntity.status(201).body("Turf added successfully");
+            Turf savedTurf = turfService.addTurf(turf);  // ✅ Save and return Turf
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedTurf); // ✅ Return Turf with ID
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error adding turf: " + e.getMessage());
+        }
+    }
+
+    // ✅ Upload images for a turf
+    @PostMapping("/{id}/images")
+    public ResponseEntity<?> uploadTurfImages(@PathVariable Long id, @RequestParam("images") List<MultipartFile> images) {
+        try {
+            List<String> urls = turfService.uploadImagesForTurf(id, images);
+            return ResponseEntity.ok().body("Uploaded successfully: " + urls.size() + " images.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Image upload failed: " + e.getMessage());
         }
     }
 

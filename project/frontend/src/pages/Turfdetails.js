@@ -11,13 +11,13 @@ const TurfDetails = () => {
   useEffect(() => {
     const fetchTurf = async () => {
       try {
-        const token = sessionStorage.getItem("token"); // ✅ Get token
+        const token = sessionStorage.getItem("token");
 
         const response = await axios.get(
           `http://localhost:8080/api/turfs/${id}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // ✅ Set header
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -54,7 +54,21 @@ const TurfDetails = () => {
       <Link to="/slot" className="back-link">← Back to Slots</Link>
 
       <div className="turf-card-details">
-        <img src={turf.imageUrl} alt={turf.name} className="turf-card-image" />
+        {/* ✅ Image Carousel Section */}
+        <div className="turf-image-carousel">
+          {turf.imageUrls && turf.imageUrls.length > 0 ? (
+            turf.imageUrls.map((url, idx) => (
+              <img
+                key={idx}
+                src={url}
+                alt={turf.name} // ✅ Removed redundant "Image" word
+                className="turf-carousel-image"
+              />
+            ))
+          ) : (
+            <p>No images available for this turf.</p>
+          )}
+        </div>
 
         <div className="turf-card-info">
           <h2>{turf.name}</h2>

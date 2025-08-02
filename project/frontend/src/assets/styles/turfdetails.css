@@ -128,3 +128,19 @@ body, html {
     padding: 80px 20px;
   }
 }
+
+
+.turf-image-carousel {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+.turf-carousel-image {
+  width: 250px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}

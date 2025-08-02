@@ -1,5 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { addTurf, getAllTurfs, deleteTurf, updateTurf } from "../services/Api";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  addTurf,
+  getAllTurfs,
+  deleteTurf,
+  updateTurf,
+  uploadImages,
+} from "../services/Api";
 import "../assets/styles/admin.css";
 import { useNavigate } from "react-router-dom";
 
@@ -9,41 +15,40 @@ const AdminDashboard = () => {
     name: "",
     location: "",
     pricePerHour: "",
-    imageUrl: "",
     description: "",
     facilities: "",
     availableSlots: "",
   });
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [editingTurfId, setEditingTurfId] = useState(null);
 
   const navigate = useNavigate();
-  const adminEmail = sessionStorage.getItem("email"); // 👈 Get admin's email
+  const adminEmail = sessionStorage.getItem("email");
 
-  const fetchTurfs = async () => {
+  const fetchTurfs = useCallback(async () => {
     try {
-      const res = await getAllTurfs(adminEmail); // 👈 Filter by email
+      const res = await getAllTurfs(adminEmail);
       setTurfs(res.data);
     } catch (err) {
       console.error("Error fetching turfs:", err);
     }
-  };
+  }, [adminEmail]);
 
   useEffect(() => {
     fetchTurfs();
-  }, []);
+  }, [fetchTurfs]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTurf({ ...newTurf, [name]: value });
+    setNewTurf((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setNewTurf({ ...newTurf, imageUrl: reader.result });
-    };
-    if (file) reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+    setImageFiles(files);
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews(previews);
   };
 
   const handleSubmit = async (e) => {
@@ -53,20 +58,38 @@ const AdminDashboard = () => {
         await updateTurf(editingTurfId, newTurf);
         alert("Turf updated successfully!");
       } else {
-        const turfWithOwner = { ...newTurf, ownerEmail: adminEmail }; // 👈 Add ownerEmail
-        await addTurf(turfWithOwner);
-        alert("Turf added successfully!");
+        const turfWithOwner = {
+          ...newTurf,
+          ownerEmail: adminEmail,
+        };
+
+        const response = await addTurf(turfWithOwner);
+        const createdTurfId = response?.data?.id;
+
+        if (!createdTurfId) {
+          alert("Turf creation failed: No ID returned.");
+          return;
+        }
+
+        if (imageFiles.length > 0) {
+          const formData = new FormData();
+          imageFiles.forEach((file) => formData.append("images", file));
+          await uploadImages(createdTurfId, formData);
+        }
+
+        alert("Turf added successfully with images!");
       }
 
       setNewTurf({
         name: "",
         location: "",
         pricePerHour: "",
-        imageUrl: "",
         description: "",
         facilities: "",
         availableSlots: "",
       });
+      setImageFiles([]);
+      setImagePreviews([]);
       setEditingTurfId(null);
       fetchTurfs();
     } catch (err) {
@@ -91,12 +114,13 @@ const AdminDashboard = () => {
       name: turf.name,
       location: turf.location,
       pricePerHour: turf.pricePerHour,
-      imageUrl: turf.imageUrl,
       description: turf.description,
       facilities: turf.facilities,
       availableSlots: turf.availableSlots,
     });
     setEditingTurfId(turf.id);
+    setImagePreviews(turf.imageUrls || []);
+    setImageFiles([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -104,7 +128,6 @@ const AdminDashboard = () => {
     <div className="admin-dashboard">
       <h2>Admin Dashboard</h2>
 
-      {/* View Bookings button */}
       <div className="btn-group" style={{ marginBottom: "20px" }}>
         <button onClick={() => navigate("/admin-bookings")} className="edit-btn">
           View Bookings
@@ -112,14 +135,70 @@ const AdminDashboard = () => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <input type="text" name="name" value={newTurf.name} onChange={handleInputChange} placeholder="Turf Name" required />
-        <input type="text" name="location" value={newTurf.location} onChange={handleInputChange} placeholder="Location" required />
-        <input type="number" name="pricePerHour" value={newTurf.pricePerHour} onChange={handleInputChange} placeholder="Price per Hour" required />
-        <input type="file" accept="image/*" onChange={handleImageChange} />
-        <input type="text" name="description" value={newTurf.description} onChange={handleInputChange} placeholder="Description" />
-        <input type="text" name="facilities" value={newTurf.facilities} onChange={handleInputChange} placeholder="Facilities (comma separated)" />
-        <input type="text" name="availableSlots" value={newTurf.availableSlots} onChange={handleInputChange} placeholder="Available Slots (comma separated)" />
-        <button type="submit">{editingTurfId ? "Update Turf" : "Add Turf"}</button>
+        <input
+          type="text"
+          name="name"
+          value={newTurf.name}
+          onChange={handleInputChange}
+          placeholder="Turf Name"
+          required
+        />
+        <input
+          type="text"
+          name="location"
+          value={newTurf.location}
+          onChange={handleInputChange}
+          placeholder="Location"
+          required
+        />
+        <input
+          type="number"
+          name="pricePerHour"
+          value={newTurf.pricePerHour}
+          onChange={handleInputChange}
+          placeholder="Price per Hour"
+          required
+        />
+        <input
+          type="text"
+          name="description"
+          value={newTurf.description}
+          onChange={handleInputChange}
+          placeholder="Description"
+        />
+        <input
+          type="text"
+          name="facilities"
+          value={newTurf.facilities}
+          onChange={handleInputChange}
+          placeholder="Facilities (comma separated)"
+        />
+        <input
+          type="text"
+          name="availableSlots"
+          value={newTurf.availableSlots}
+          onChange={handleInputChange}
+          placeholder="Available Slots (comma separated)"
+        />
+
+        <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+
+        {imagePreviews.length > 0 && (
+          <div className="image-preview-container">
+            {imagePreviews.map((preview, idx) => (
+              <img
+                key={idx}
+                src={preview}
+                alt={`Turf Preview ${idx + 1}`}
+                className="preview-img"
+              />
+            ))}
+          </div>
+        )}
+
+        <button type="submit">
+          {editingTurfId ? "Update Turf" : "Add Turf"}
+        </button>
       </form>
 
       <div className="turf-list">
@@ -129,7 +208,13 @@ const AdminDashboard = () => {
         ) : (
           turfs.map((turf) => (
             <div className="turf-card" key={turf.id}>
-              <img src={turf.imageUrl} alt={turf.name} />
+              <div className="thumbnail-wrapper">
+                {turf.imageUrls && turf.imageUrls.length > 0 ? (
+                  <img src={turf.imageUrls[0]} alt={turf.name} />
+                ) : (
+                  <div className="no-img">No Image</div>
+                )}
+              </div>
               <h4>{turf.name}</h4>
               <p>{turf.location}</p>
               <p>₹{turf.pricePerHour} / hour</p>

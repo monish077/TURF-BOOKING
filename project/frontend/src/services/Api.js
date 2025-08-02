@@ -55,6 +55,16 @@ export const updateTurf = (id, data) =>
 export const deleteTurf = (id) =>
   axios.delete(`${API_BASE_URL}/turfs/${id}`, authHeader());
 
+export const uploadImages = (turfId, formData) =>
+  axios.post(`${API_BASE_URL}/turfs/${turfId}/images`, formData, {
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      "Content-Type": "multipart/form-data",
+    },
+    withCredentials: true,
+  });
+
+
 
 // ================== BOOKING APIs ==================
 

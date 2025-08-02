@@ -13,21 +13,22 @@ const Slot = () => {
         const response = await getPublicTurfs();
         const backendTurfs = response.data;
 
-        // ✅ Format turfs for frontend display
+        // ✅ Format turfs with proper image handling
         const turfsWithImages = backendTurfs.map((turf) => ({
           id: turf.id,
           name: turf.name,
           location: turf.location,
           price: turf.pricePerHour ? `₹${turf.pricePerHour}` : "N/A",
-          image: turf.imageUrl?.startsWith("data:image")
-            ? turf.imageUrl
-            : "/default-turf.jpg", // fallback image
+          image:
+            turf.imageUrls && turf.imageUrls.length > 0
+              ? turf.imageUrls[0]
+              : "/default-turf.jpg", // fallback image if none uploaded
         }));
 
         setAllTurfs(turfsWithImages);
-        setLoading(false);
       } catch (error) {
         console.error("❌ Error fetching turfs:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -60,7 +61,12 @@ const Slot = () => {
         ) : allTurfs.length > 0 ? (
           allTurfs.map((turf) => (
             <div className="turf-card" key={turf.id}>
-              <img src={turf.image} alt={turf.name} className="turf-image" />
+              <img
+                src={turf.image}
+                alt={`Thumbnail of ${turf.name}`}
+                className="turf-image"
+                onError={(e) => (e.target.src = "/default-turf.jpg")}
+              />
               <h4>{turf.name}</h4>
               <p>{turf.price} / hour</p>
               <p>{turf.location}</p>

@@ -1,6 +1,8 @@
 package com.example.demo.turfbooking.entity;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "turfs")
@@ -11,13 +13,14 @@ public class Turf {
     private Long id;
 
     private String name;
-
     private String location;
-
     private double pricePerHour;
 
+    // ✅ Changed from single imageUrl to multiple image URLs
+    @ElementCollection
+    @CollectionTable(name = "turf_images", joinColumns = @JoinColumn(name = "turf_id"))
     @Column(name = "image_url", columnDefinition = "TEXT")
-    private String imageUrl;
+    private List<String> imageUrls = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -28,19 +31,19 @@ public class Turf {
     @Column(name = "available_slots", columnDefinition = "TEXT")
     private String availableSlots;
 
-    // ✅ NEW: Link Turf to the Admin who created it
+    // ✅ Link Turf to the Admin who created it
     @ManyToOne
     @JoinColumn(name = "admin_id")
     private User admin;
 
     public Turf() {}
 
-    public Turf(String name, String location, double pricePerHour, String imageUrl,
+    public Turf(String name, String location, double pricePerHour, List<String> imageUrls,
                 String description, String facilities, String availableSlots) {
         this.name = name;
         this.location = location;
         this.pricePerHour = pricePerHour;
-        this.imageUrl = imageUrl;
+        this.imageUrls = imageUrls;
         this.description = description;
         this.facilities = facilities;
         this.availableSlots = availableSlots;
@@ -80,12 +83,12 @@ public class Turf {
         this.pricePerHour = pricePerHour;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public List<String> getImageUrls() {
+        return imageUrls;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 
     public String getDescription() {
@@ -127,7 +130,7 @@ public class Turf {
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", pricePerHour=" + pricePerHour +
-                ", imageUrl='" + imageUrl + '\'' +
+                ", imageUrls=" + imageUrls +
                 ", description='" + description + '\'' +
                 ", facilities='" + facilities + '\'' +
                 ", availableSlots='" + availableSlots + '\'' +
