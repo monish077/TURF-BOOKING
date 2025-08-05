@@ -1,5 +1,6 @@
 package com.example.demo.turfbooking.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +15,11 @@ public class Turf {
 
     private String name;
     private String location;
+
+    @Column(name = "price_per_hour")
     private double pricePerHour;
 
-    // ✅ Changed from single imageUrl to multiple image URLs
+    // ✅ Store multiple image URLs in a separate table (turf_images)
     @ElementCollection
     @CollectionTable(name = "turf_images", joinColumns = @JoinColumn(name = "turf_id"))
     @Column(name = "image_url", columnDefinition = "TEXT")
@@ -31,11 +34,13 @@ public class Turf {
     @Column(name = "available_slots", columnDefinition = "TEXT")
     private String availableSlots;
 
-    // ✅ Link Turf to the Admin who created it
-    @ManyToOne
+    // ✅ Link to admin (user who created this turf)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User admin;
 
+    // === Constructors ===
     public Turf() {}
 
     public Turf(String name, String location, double pricePerHour, List<String> imageUrls,
@@ -49,7 +54,7 @@ public class Turf {
         this.availableSlots = availableSlots;
     }
 
-    // ===== Getters and Setters =====
+    // === Getters and Setters ===
 
     public Long getId() {
         return id;

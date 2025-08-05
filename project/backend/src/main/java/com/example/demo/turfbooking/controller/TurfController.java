@@ -1,5 +1,7 @@
 package com.example.demo.turfbooking.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.demo.turfbooking.entity.Turf;
 import com.example.demo.turfbooking.entity.User;
 import com.example.demo.turfbooking.repository.UserRepository;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -25,25 +28,25 @@ public class TurfController {
     private final JwtUtil jwtUtil;
 
     @Autowired
+    private Cloudinary cloudinary;
+
+    @Autowired
     public TurfController(TurfService turfService, UserRepository userRepository, JwtUtil jwtUtil) {
         this.turfService = turfService;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
     }
 
-    // ❌ Admin only - not used in frontend
     @GetMapping
     public List<Turf> getAllTurfs() {
         return turfService.getAllTurfs();
     }
 
-    // ✅ PUBLIC: Slot page — returns all turfs
     @GetMapping("/public")
     public ResponseEntity<List<Turf>> getAllPublicTurfs() {
         return ResponseEntity.ok(turfService.getAllTurfs());
     }
 
-    // ✅ ADMIN: Get turfs by admin (JWT)
     @GetMapping("/admin")
     public ResponseEntity<?> getTurfsByAdmin(@RequestHeader("Authorization") String authHeader) {
         try {
@@ -61,7 +64,6 @@ public class TurfController {
         }
     }
 
-    // ✅ Get single turf by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         try {
@@ -74,9 +76,16 @@ public class TurfController {
         }
     }
 
-    // ✅ Add turf (ADMIN only) — updated to return saved turf with ID
-    @PostMapping
-    public ResponseEntity<?> addTurf(@RequestBody Turf turf, @RequestHeader("Authorization") String authHeader) {
+    // ✅ Add turf with image
+    @PostMapping("/add-with-image")
+    public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
+                                              @RequestParam("location") String location,
+                                              @RequestParam("price") Double price,
+                                              @RequestParam(value = "description", required = false) String description,
+                                              @RequestParam(value = "facilities", required = false) String facilities,
+                                              @RequestParam(value = "availableSlots", required = false) String availableSlots,
+                                              @RequestParam("image") MultipartFile image,
+                                              @RequestHeader("Authorization") String authHeader) {
         try {
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
@@ -84,16 +93,30 @@ public class TurfController {
             User admin = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
 
+            // Upload to Cloudinary
+            Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+            String imageUrl = (String) uploadResult.get("secure_url");
+
+            // Create and save Turf
+            Turf turf = new Turf();
+            turf.setName(name);
+            turf.setLocation(location);
+            turf.setPricePerHour(price);
+            turf.setDescription(description);
+            turf.setFacilities(facilities);
+            turf.setAvailableSlots(availableSlots);
+            turf.setImageUrls(List.of(imageUrl)); // ✅ FIXED HERE
             turf.setAdmin(admin);
-            Turf savedTurf = turfService.addTurf(turf);  // ✅ Save and return Turf
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedTurf); // ✅ Return Turf with ID
+
+            Turf savedTurf = turfService.addTurf(turf);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedTurf);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Error adding turf: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error adding turf with image: " + e.getMessage());
         }
     }
 
-    // ✅ Upload images for a turf
+    // ✅ Upload additional images
     @PostMapping("/{id}/images")
     public ResponseEntity<?> uploadTurfImages(@PathVariable Long id, @RequestParam("images") List<MultipartFile> images) {
         try {
@@ -105,7 +128,7 @@ public class TurfController {
         }
     }
 
-    // ✅ Update turf by ID
+    // ✅ Update turf
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTurf(@PathVariable Long id, @RequestBody Turf turf) {
         try {
@@ -137,7 +160,7 @@ public class TurfController {
         }
     }
 
-    // ✅ DB test endpoint
+    // ✅ DB Test
     @GetMapping("/test-db")
     public ResponseEntity<?> testDb() {
         try {

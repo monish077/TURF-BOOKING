@@ -10,7 +10,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
 
     <groupId>com.example</groupId>
@@ -62,7 +62,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ✅ JWT (JJWT) -->
+        <!-- ✅ JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -81,7 +81,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ✅ Lombok (for reducing boilerplate code) -->
+        <!-- ✅ Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -95,11 +95,18 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- ✅ Load environment variables from .env -->
+        <!-- ✅ .env Support -->
         <dependency>
             <groupId>me.paulschwarz</groupId>
             <artifactId>spring-dotenv</artifactId>
             <version>3.0.0</version>
+        </dependency>
+
+        <!-- ✅ Cloudinary Java SDK (HTTP v4.4) -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.32.2</version>
         </dependency>
 
     </dependencies>
@@ -114,4 +121,3 @@
     </build>
 
 </project>
-

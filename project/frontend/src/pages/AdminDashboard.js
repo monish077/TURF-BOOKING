@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  addTurf,
   getAllTurfs,
   deleteTurf,
   updateTurf,
@@ -51,50 +50,72 @@ const AdminDashboard = () => {
     setImagePreviews(previews);
   };
 
+  const resetForm = () => {
+    setNewTurf({
+      name: "",
+      location: "",
+      pricePerHour: "",
+      description: "",
+      facilities: "",
+      availableSlots: "",
+    });
+    setImageFiles([]);
+    setImagePreviews([]);
+    setEditingTurfId(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = sessionStorage.getItem("token");
+
       if (editingTurfId) {
         await updateTurf(editingTurfId, newTurf);
         alert("Turf updated successfully!");
       } else {
-        const turfWithOwner = {
-          ...newTurf,
-          ownerEmail: adminEmail,
-        };
-
-        const response = await addTurf(turfWithOwner);
-        const createdTurfId = response?.data?.id;
-
-        if (!createdTurfId) {
-          alert("Turf creation failed: No ID returned.");
-          return;
-        }
+        const formData = new FormData();
+        formData.append("name", newTurf.name);
+        formData.append("location", newTurf.location);
+        formData.append("price", newTurf.pricePerHour);
+        formData.append("description", newTurf.description);
+        formData.append("facilities", newTurf.facilities);
+        formData.append("availableSlots", newTurf.availableSlots);
 
         if (imageFiles.length > 0) {
-          const formData = new FormData();
-          imageFiles.forEach((file) => formData.append("images", file));
-          await uploadImages(createdTurfId, formData);
+          formData.append("image", imageFiles[0]);
+        }
+
+        const response = await fetch("http://localhost:8080/api/turfs/add-with-image", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error("Failed to add turf: " + errText);
+        }
+
+        const createdTurf = await response.json();
+        const createdTurfId = createdTurf?.id;
+
+        // Upload remaining images (if any)
+        if (imageFiles.length > 1) {
+          const moreImagesForm = new FormData();
+          imageFiles.slice(1).forEach((file) => moreImagesForm.append("images", file));
+          await uploadImages(createdTurfId, moreImagesForm);
         }
 
         alert("Turf added successfully with images!");
       }
 
-      setNewTurf({
-        name: "",
-        location: "",
-        pricePerHour: "",
-        description: "",
-        facilities: "",
-        availableSlots: "",
-      });
-      setImageFiles([]);
-      setImagePreviews([]);
-      setEditingTurfId(null);
+      resetForm();
       fetchTurfs();
     } catch (err) {
       console.error("Error saving turf:", err);
-      alert("Failed to save turf.");
+      alert("Failed to save turf: " + err.message);
     }
   };
 
