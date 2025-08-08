@@ -1,4 +1,4 @@
-app = "backend-twilight-tree-2764"
+app = "turf-backend-monish"
 primary_region = "bom"
 
 [build]
@@ -6,9 +6,6 @@ primary_region = "bom"
 
 [env]
   PORT = "8080"
-  DB_HOST = "turf-db-monish.internal"
-  DB_USER = "postgres"
-  DB_NAME = "turfbooking"
 
 [[services]]
   internal_port = 8080
@@ -21,8 +18,3 @@ primary_region = "bom"
   [[services.ports]]
     handlers = ["tls", "http"]
     port = 443
-
-  [[services.tcp_checks]]
-    grace_period = "10s"
-    interval = "15s"
-    timeout = "2s"

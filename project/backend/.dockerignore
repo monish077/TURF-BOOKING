@@ -1,37 +1,5 @@
-# === Removed target exclusions to allow .jar ===
+**/target/
+**/build/
+**/.git/
+**/.idea/
 **/*.iml
-**/*.log
-**/*.class
-**/HELP.md
-
-# Removed these so Docker can copy the jar
-# target
-# **/target
-
-**/.mvn/wrapper/maven-wrapper.jar
-**/.apt_generated
-**/.classpath
-**/.factorypath
-**/.project
-**/.settings
-**/.springBeans
-**/.sts4-cache
-
-**/.idea
-**/*.iws
-**/*.iml
-**/*.ipr
-
-nbproject/private
-nbbuild
-dist
-nbdist
-.nb-gradle
-**/build
-!**/**/src/main/**/build
-!**/**/src/test/**/build
-
-**/.vscode
-**/.env
-
-fly.toml
