@@ -17,7 +17,8 @@ public class CorsConfig {
                 registry.addMapping("/**")
                         .allowedOriginPatterns(
                             "http://localhost:3000",
-                            "https://turf-booking-frontend.vercel.app"
+                            "https://turf-booking-frontend.vercel.app",
+                            "https://turf-booking-an7sfm399-monishs-projects-29844c66.vercel.app"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
