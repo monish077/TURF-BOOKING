@@ -14,13 +14,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/turfs")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {
+        "https://turf-booking-frontend.vercel.app",
+        "http://localhost:3000"
+})
 public class TurfController {
 
     private final TurfService turfService;
@@ -52,31 +56,27 @@ public class TurfController {
         try {
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
-
             User admin = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-            List<Turf> adminTurfs = turfService.getTurfsByAdmin(admin);
-            return ResponseEntity.ok(adminTurfs);
+            return ResponseEntity.ok(turfService.getTurfsByAdmin(admin));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error retrieving admin turfs: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving admin turfs: " + e.getMessage());
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
-        try {
-            Optional<Turf> turf = turfService.getTurfById(id);
-            return turf.<ResponseEntity<?>>map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(404).body("Turf not found with ID: " + id));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error retrieving turf: " + e.getMessage());
-        }
+        Optional<Turf> turf = turfService.getTurfById(id);
+        return turf.<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Turf not found with ID: " + id));
     }
 
-    // ✅ Add turf with image
+    /**
+     * ✅ Add turf with multiple images
+     */
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
                                               @RequestParam("location") String location,
@@ -84,20 +84,21 @@ public class TurfController {
                                               @RequestParam(value = "description", required = false) String description,
                                               @RequestParam(value = "facilities", required = false) String facilities,
                                               @RequestParam(value = "availableSlots", required = false) String availableSlots,
-                                              @RequestParam("image") MultipartFile image,
+                                              @RequestParam("images") List<MultipartFile> images,
                                               @RequestHeader("Authorization") String authHeader) {
         try {
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
-
             User admin = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-            // Upload to Cloudinary
-            Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
-            String imageUrl = (String) uploadResult.get("secure_url");
+            List<String> imageUrls = new ArrayList<>();
+            for (MultipartFile image : images) {
+                Map<String, Object> uploadResult = cloudinary.uploader()
+                        .upload(image.getBytes(), ObjectUtils.emptyMap());
+                imageUrls.add((String) uploadResult.get("secure_url"));
+            }
 
-            // Create and save Turf
             Turf turf = new Turf();
             turf.setName(name);
             turf.setLocation(location);
@@ -105,30 +106,36 @@ public class TurfController {
             turf.setDescription(description);
             turf.setFacilities(facilities);
             turf.setAvailableSlots(availableSlots);
-            turf.setImageUrls(List.of(imageUrl)); // ✅ FIXED HERE
+            turf.setImageUrls(imageUrls);
             turf.setAdmin(admin);
 
-            Turf savedTurf = turfService.addTurf(turf);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedTurf);
+            return ResponseEntity.status(HttpStatus.CREATED).body(turfService.addTurf(turf));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error adding turf with image: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error adding turf with images: " + e.getMessage());
         }
     }
 
-    // ✅ Upload additional images
+    /**
+     * ✅ Upload additional images to an existing turf
+     */
     @PostMapping("/{id}/images")
-    public ResponseEntity<?> uploadTurfImages(@PathVariable Long id, @RequestParam("images") List<MultipartFile> images) {
+    public ResponseEntity<?> uploadTurfImages(@PathVariable Long id,
+                                              @RequestParam("images") List<MultipartFile> images) {
         try {
-            List<String> urls = turfService.uploadImagesForTurf(id, images);
-            return ResponseEntity.ok().body("Uploaded successfully: " + urls.size() + " images.");
+            List<String> urls = new ArrayList<>();
+            for (MultipartFile image : images) {
+                Map<String, Object> uploadResult = cloudinary.uploader()
+                        .upload(image.getBytes(), ObjectUtils.emptyMap());
+                urls.add((String) uploadResult.get("secure_url"));
+            }
+            return ResponseEntity.ok(turfService.addImagesToTurf(id, urls));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Image upload failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Image upload failed: " + e.getMessage());
         }
     }
 
-    // ✅ Update turf
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTurf(@PathVariable Long id, @RequestBody Turf turf) {
         try {
@@ -136,38 +143,35 @@ public class TurfController {
             if (updated != null) {
                 return ResponseEntity.ok(updated);
             } else {
-                return ResponseEntity.status(404).body("Turf not found with ID: " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found with ID: " + id);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error updating turf: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating turf: " + e.getMessage());
         }
     }
 
-    // ✅ Delete turf
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTurf(@PathVariable Long id) {
         try {
-            boolean deleted = turfService.deleteTurf(id);
-            if (deleted) {
+            if (turfService.deleteTurf(id)) {
                 return ResponseEntity.ok("Turf deleted successfully.");
             } else {
-                return ResponseEntity.status(404).body("Turf not found.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found.");
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error deleting turf: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting turf: " + e.getMessage());
         }
     }
 
-    // ✅ DB Test
     @GetMapping("/test-db")
     public ResponseEntity<?> testDb() {
         try {
             return ResponseEntity.ok(turfService.getAllTurfs());
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error testing DB: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error testing DB: " + e.getMessage());
         }
     }
 }
