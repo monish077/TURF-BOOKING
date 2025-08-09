@@ -71,7 +71,7 @@ public class TurfService {
         }).orElse(null);
     }
 
-    // ✅ Upload multiple images for a turf
+    // ✅ Upload multiple images for a turf (local file system)
     public List<String> uploadImagesForTurf(Long turfId, List<MultipartFile> images) throws IOException {
         Optional<Turf> optionalTurf = turfRepo.findById(turfId);
         if (!optionalTurf.isPresent()) {
@@ -109,5 +109,23 @@ public class TurfService {
 
         turfRepo.save(turf);
         return uploadedUrls;
+    }
+
+    // ✅ Add image URLs directly to a turf (used by controller)
+    public Turf addImagesToTurf(Long turfId, List<String> imageUrls) {
+        Optional<Turf> optionalTurf = turfRepo.findById(turfId);
+        if (!optionalTurf.isPresent()) {
+            throw new RuntimeException("Turf not found with ID: " + turfId);
+        }
+
+        Turf turf = optionalTurf.get();
+        List<String> currentImages = turf.getImageUrls();
+        if (currentImages == null) {
+            currentImages = new ArrayList<>();
+        }
+        currentImages.addAll(imageUrls);
+        turf.setImageUrls(currentImages);
+
+        return turfRepo.save(turf);
     }
 }
