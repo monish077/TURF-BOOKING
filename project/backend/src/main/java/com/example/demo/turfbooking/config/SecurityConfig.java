@@ -33,10 +33,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> {}) // Enable CORS (custom config optional)
+            .cors(cors -> {}) // Enable CORS using global config
 
             .authorizeHttpRequests(auth -> auth
-                // ✅ Public endpoints
+                // Allow preflight OPTIONS requests to pass without auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Public endpoints (registration, login, verification, etc)
                 .requestMatchers(
                     "/api/users/register",
                     "/api/users/login",
@@ -51,25 +54,25 @@ public class SecurityConfig {
                     "/uploads/**"
                 ).permitAll()
 
-                // ✅ Serve static files like images publicly (explicit GET permission)
+                // Public GET access to uploaded static files
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
-                // ✅ Role-based endpoints
+                // Role-based access control
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/api/bookings/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 
-                // ✅ All other turf APIs require authentication (for image upload etc.)
+                // All other turf endpoints require authentication
                 .requestMatchers("/api/turfs/**").authenticated()
 
-                // 🔐 Catch all
+                // Catch all others require authentication
                 .anyRequest().authenticated()
             )
 
-            // ✅ Stateless session for JWT
+            // Stateless session management (no sessions, JWT based)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // ✅ Apply JWT filter
+            // Register JWT filter before username/password authentication filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
