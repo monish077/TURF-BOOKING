@@ -1,14 +1,13 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = "https://turf-booking-pp67.onrender.com/api";
+
 
 // 🔐 Auth header using JWT token from sessionStorage
-const authHeader = () => ({
-  headers: {
-    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-  },
-  withCredentials: true,
-});
+const authHeader = () => {
+  const token = sessionStorage.getItem("token");
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+};
 
 // ================== AUTH (User & Admin) ==================
 
