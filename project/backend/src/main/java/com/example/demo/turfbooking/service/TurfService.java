@@ -1,5 +1,7 @@
 package com.example.demo.turfbooking.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.demo.turfbooking.entity.Turf;
 import com.example.demo.turfbooking.entity.User;
 import com.example.demo.turfbooking.repository.TurfRepository;
@@ -7,49 +9,45 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class TurfService {
 
     private final TurfRepository turfRepo;
-    private final String uploadDir = "uploads/";
+    private final Cloudinary cloudinary;
 
     @Autowired
-    public TurfService(TurfRepository turfRepo) {
+    public TurfService(TurfRepository turfRepo, Cloudinary cloudinary) {
         this.turfRepo = turfRepo;
-
-        // ✅ Create uploads folder if it doesn't exist
-        File dir = new File(uploadDir);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+        this.cloudinary = cloudinary;
     }
 
-    // ✅ Get all turfs
+    // Get all turfs
     public List<Turf> getAllTurfs() {
         return turfRepo.findAll();
     }
 
-    // ✅ Get turfs by admin
+    // Get turfs by admin
     public List<Turf> getTurfsByAdmin(User admin) {
         return turfRepo.findByAdmin(admin);
     }
 
-    // ✅ Get turf by ID
+    // Get turf by ID
     public Optional<Turf> getTurfById(Long id) {
         return turfRepo.findById(id);
     }
 
-    // ✅ Add turf
+    // Add turf
     public Turf addTurf(Turf turf) {
         return turfRepo.save(turf);
     }
 
-    // ✅ Delete turf
+    // Delete turf
     public boolean deleteTurf(Long id) {
         if (turfRepo.existsById(id)) {
             turfRepo.deleteById(id);
@@ -58,7 +56,7 @@ public class TurfService {
         return false;
     }
 
-    // ✅ Update turf
+    // Update turf
     public Turf updateTurf(Long id, Turf updatedTurf) {
         return turfRepo.findById(id).map(existingTurf -> {
             existingTurf.setName(updatedTurf.getName());
@@ -71,7 +69,7 @@ public class TurfService {
         }).orElse(null);
     }
 
-    // ✅ Upload multiple images for a turf (local file system)
+    // Upload multiple images for a turf (Cloudinary)
     public List<String> uploadImagesForTurf(Long turfId, List<MultipartFile> images) throws IOException {
         Optional<Turf> optionalTurf = turfRepo.findById(turfId);
         if (!optionalTurf.isPresent()) {
@@ -81,25 +79,16 @@ public class TurfService {
         Turf turf = optionalTurf.get();
         List<String> uploadedUrls = new ArrayList<>();
 
-        for (MultipartFile file : images) {
-            if (file == null || file.isEmpty()) continue;
+        for (MultipartFile image : images) {
+            if (image == null || image.isEmpty()) continue;
 
-            String originalFilename = file.getOriginalFilename();
-            if (originalFilename == null || !originalFilename.contains(".")) {
-                continue; // Skip invalid file
-            }
-
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String uniqueFileName = UUID.randomUUID() + fileExtension;
-
-            Path destinationPath = Paths.get(uploadDir).resolve(uniqueFileName);
-            Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "http://localhost:8080/uploads/" + uniqueFileName;
-            uploadedUrls.add(fileUrl);
+            // Upload image bytes to Cloudinary
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+            String imageUrl = (String) uploadResult.get("secure_url");
+            uploadedUrls.add(imageUrl);
         }
 
-        // ✅ Append to existing image URLs or initialize
+        // Append to existing image URLs or initialize list
         List<String> currentImages = turf.getImageUrls();
         if (currentImages == null) {
             currentImages = new ArrayList<>();
@@ -111,7 +100,7 @@ public class TurfService {
         return uploadedUrls;
     }
 
-    // ✅ Add image URLs directly to a turf (used by controller)
+    // Add image URLs directly to a turf (used by controller)
     public Turf addImagesToTurf(Long turfId, List<String> imageUrls) {
         Optional<Turf> optionalTurf = turfRepo.findById(turfId);
         if (!optionalTurf.isPresent()) {
