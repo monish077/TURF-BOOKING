@@ -1,14 +1,21 @@
-# Use Maven to build the app
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
-WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
+# Use an official OpenJDK runtime as a parent image
+FROM eclipse-temurin:17-jdk-alpine
 
-# Use lightweight JDK for running the app
-FROM eclipse-temurin:17-jdk
+# Set working directory in container
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
 
-# Expose port
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar", "--server.address=0.0.0.0", "--server.port=8080"]
+# Copy Maven wrapper and pom.xml first (better caching)
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+
+# Download dependencies
+RUN ./mvnw dependency:go-offline
+
+# Copy the rest of the source code
+COPY src ./src
+
+# Build the application
+RUN ./mvnw clean package -DskipTests
+
+# Run the application
+CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
