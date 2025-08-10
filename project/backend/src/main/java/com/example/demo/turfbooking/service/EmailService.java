@@ -14,20 +14,19 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // Backend URL (update if your backend URL changes)
-    private static final String BACKEND_URL = "https://turf-booking-pp67.onrender.com";
-    // private static final String BACKEND_URL = "http://localhost:8080"; // For local testing
+    // Frontend URL for links - CHANGE if your frontend URL changes
+    private static final String FRONTEND_URL = "https://turf-booking-frontend.vercel.app";
+    // private static final String FRONTEND_URL = "http://localhost:3000"; // For local dev
 
     private static final String SENDER_EMAIL = "monidhoni0007@gmail.com";
     private static final String SENDER_NAME = "Mars Arena Turf Booking";
 
     /**
-     * ✅ Send email verification during registration
+     * Send email verification during registration
      */
     public void sendVerificationEmail(User user) {
         String subject = "Verify your email for Turf Booking";
-        // Changed here to point to backend API verify endpoint
-        String verifyURL = BACKEND_URL + "/api/users/verify?token=" + user.getVerificationToken();
+        String verifyURL = FRONTEND_URL + "/verify-email?token=" + user.getVerificationToken();
 
         String content = "<p>Hello <strong>" + user.getName() + "</strong>,</p>"
                 + "<p>Thanks for registering. Click the link below to verify your email:</p>"
@@ -38,11 +37,11 @@ public class EmailService {
     }
 
     /**
-     * ✅ Send forgot password email
+     * Send forgot password email
      */
     public void sendResetPasswordEmail(User user) {
         String subject = "Reset your password - Turf Booking";
-        String resetURL = BACKEND_URL + "/reset-password?token=" + user.getResetPasswordToken();
+        String resetURL = FRONTEND_URL + "/reset-password?token=" + user.getResetPasswordToken();
 
         String content = "<p>Hello <strong>" + user.getName() + "</strong>,</p>"
                 + "<p>You requested a password reset. Click below to reset your password:</p>"
@@ -54,7 +53,7 @@ public class EmailService {
     }
 
     /**
-     * ✅ Send booking confirmation email after successful payment
+     * Send booking confirmation email after successful payment
      */
     public void sendBookingConfirmationEmail(String toEmail, String userName, String turfName, String date, String slot, String price) {
         String subject = "✅ Turf Booking Confirmed!";
@@ -74,7 +73,7 @@ public class EmailService {
     }
 
     /**
-     * ✅ Shared method to send HTML emails
+     * Shared method to send HTML emails
      */
     private void sendHtmlEmail(String to, String subject, String htmlContent) {
         try {
@@ -95,7 +94,7 @@ public class EmailService {
     }
 
     /**
-     * ✅ Backup plain email method
+     * Backup plain email method
      */
     public void sendEmail(String to, String subject, String content) {
         sendHtmlEmail(to, subject, content);
