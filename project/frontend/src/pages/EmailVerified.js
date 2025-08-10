@@ -18,7 +18,6 @@ const EmailVerified = () => {
       return;
     }
 
-    // Call backend API to verify token
     axios
       .get(`https://turf-booking-pp67.onrender.com/api/users/verify?token=${token}`)
       .then((response) => {
@@ -62,7 +61,6 @@ const EmailVerified = () => {
     }
   }, [status, navigate]);
 
-  // Render UI based on verification status
   if (status === "verifying") {
     return (
       <div style={styles.wrapper}>
@@ -91,22 +89,15 @@ const EmailVerified = () => {
     );
   }
 
-  // status === "success"
+  // Success UI — no button here
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
         <h2 style={styles.title}>✅ Email Verified!</h2>
         <p style={styles.message}>Your email has been successfully verified.</p>
         <p style={styles.redirect}>
-          Redirecting to login page in <strong>{secondsLeft}</strong> second
-          {secondsLeft !== 1 ? "s" : ""}...
+          Redirecting to login page in <strong>{secondsLeft}</strong> second{secondsLeft === 1 ? "" : "s"}...
         </p>
-        <button
-          style={styles.button}
-          onClick={() => navigate("/login", { replace: true })}
-        >
-          Go to Login Now
-        </button>
       </div>
     </div>
   );
