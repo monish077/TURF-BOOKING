@@ -107,6 +107,7 @@ export const sendBookingConfirmation = (bookingId) =>
   axios.get(`${API_BASE_URL}/bookings/send-confirmation/${bookingId}`, authHeader());
 
 // ================== DEFAULT AXIOS INSTANCE ==================
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
