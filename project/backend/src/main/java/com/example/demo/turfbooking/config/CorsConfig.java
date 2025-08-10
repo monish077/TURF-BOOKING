@@ -17,7 +17,7 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow these origins (use AllowedOriginPatterns for wildcards or multiple subdomains)
+        // Allowed origins - update with your actual frontend URLs
         config.setAllowedOriginPatterns(Arrays.asList(
             "https://turf-booking-frontend.vercel.app",
             "https://turf-booking-an7sfm399-monishs-projects-29844c66.vercel.app",
@@ -27,15 +27,15 @@ public class CorsConfig {
         // Allowed HTTP methods
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // Allowed headers — you can set "*" or specify headers
+        // Allowed headers - "*" allows all headers
         config.setAllowedHeaders(Arrays.asList("*"));
 
-        // Allow credentials (cookies, authorization headers, TLS client certs)
+        // Allow credentials (Authorization headers, cookies)
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        // Apply this CORS config to all endpoints
+        // Apply CORS config to all API endpoints
         source.registerCorsConfiguration("/**", config);
 
         return source;

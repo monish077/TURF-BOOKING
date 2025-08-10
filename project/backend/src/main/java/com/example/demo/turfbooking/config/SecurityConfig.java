@@ -20,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.web.cors.CorsConfigurationSource;
+
 @Configuration
 public class SecurityConfig {
 
@@ -29,21 +31,24 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
+    @Autowired
+    private CorsConfigurationSource corsConfigurationSource;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF for REST APIs (usually safe when using JWT)
+            // Disable CSRF since we use JWT tokens
             .csrf(csrf -> csrf.disable())
 
-            // Enable CORS (configured globally via CorsConfig)
-            .cors(cors -> {})
+            // Enable CORS with the CorsConfigurationSource bean
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-            // Configure URL authorization rules
+            // Configure URL authorization
             .authorizeHttpRequests(auth -> auth
-                // Allow OPTIONS calls for preflight (CORS)
+                // Allow OPTIONS requests for CORS preflight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Public endpoints that do not require authentication
+                // Public endpoints accessible without authentication
                 .requestMatchers(
                     "/api/users/register",
                     "/api/users/login",
@@ -54,14 +59,17 @@ public class SecurityConfig {
                     "/api/users/test-mail",
                     "/test/**",
                     "/api/turfs/public",
-                    "/api/turfs/{id}",
-                    "/uploads/**"
+                    "/api/turfs/*",      // use * instead of {id} for path variables in matcher
+                    "/uploads/**",
+                    "/manifest.json",
+                    "/favicon.ico",
+                    "/static/**"
                 ).permitAll()
 
                 // Public GET access to uploaded files
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
-                // Role-based access control
+                // Role based access control
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/api/bookings/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
@@ -69,26 +77,26 @@ public class SecurityConfig {
                 // Other turf-related APIs require authentication
                 .requestMatchers("/api/turfs/**").authenticated()
 
-                // All other requests require authentication
+                // Any other request requires authentication
                 .anyRequest().authenticated()
             )
 
-            // Use stateless session management since JWT is used
+            // Use stateless session management (no HTTP sessions)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Add JWT authentication filter before the default username/password filter
+            // Add JWT filter before username/password filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Password encoder bean using BCrypt
+    // Password encoder using BCrypt
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Expose AuthenticationManager bean to be used for authentication elsewhere
+    // Expose AuthenticationManager bean
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
