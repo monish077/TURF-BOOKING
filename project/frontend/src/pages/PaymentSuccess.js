@@ -30,7 +30,7 @@ const PaymentSuccess = () => {
         </p>
       </div>
 
-      {/* Add animation styles inside a style tag */}
+      {/* Inline style tag for animation keyframes */}
       <style>
         {`
           @keyframes fadeIn {

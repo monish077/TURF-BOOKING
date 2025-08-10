@@ -23,21 +23,22 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import PaymentSuccess from "../pages/PaymentSuccess";
 
-// Role-based private route wrapper
+// Role-based private route wrapper component
 const PrivateRoute = ({ children, allowedRoles }) => {
   const token = sessionStorage.getItem("token");
   const role = sessionStorage.getItem("role");
 
   if (!token) {
-    // Not logged in, redirect to login
+    // User not logged in — redirect to login page
     return <Navigate to="/login" replace />;
   }
 
   if (!allowedRoles.includes(role)) {
-    // Logged in but role not allowed, redirect to home
+    // User logged in but does not have required role — redirect to home page
     return <Navigate to="/" replace />;
   }
 
+  // User authenticated and authorized — render the child component
   return children;
 };
 
@@ -54,7 +55,7 @@ const AppRouter = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* User routes (require USER role) */}
+        {/* User routes (only accessible to users with USER role) */}
         <Route
           path="/slot"
           element={
@@ -112,7 +113,7 @@ const AppRouter = () => {
           }
         />
 
-        {/* Admin routes (require ADMIN role) */}
+        {/* Admin routes (only accessible to users with ADMIN role) */}
         <Route
           path="/admin/dashboard"
           element={
@@ -130,7 +131,7 @@ const AppRouter = () => {
           }
         />
 
-        {/* Catch-all redirect to home */}
+        {/* Catch-all: redirect any unknown routes to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
