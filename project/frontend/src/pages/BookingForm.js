@@ -38,6 +38,7 @@ const BookingForm = () => {
     }
   });
 
+  // fetchBookings only depends on id and date (from formData)
   const fetchBookings = useCallback(async () => {
     try {
       const res = await axiosInstance.get(`/bookings/turf/${id}`, getTokenConfig());
@@ -49,16 +50,18 @@ const BookingForm = () => {
         return acc;
       }, {});
 
-      // Fully booked dates
-      const fullDates = Object.keys(dateCounts).filter((date) => dateCounts[date] >= 24);
+      // Fully booked dates (24 slots max assumed)
+      const fullDates = Object.keys(dateCounts).filter(date => dateCounts[date] >= 24);
       setDisabledDates(fullDates);
 
-      // Set booked slots for selected date
+      // Update booked slots for selected date
       if (formData.date) {
         const bookedForDate = turfBookings
-          .filter((booking) => booking.date === formData.date)
-          .map((booking) => booking.slot);
+          .filter(booking => booking.date === formData.date)
+          .map(booking => booking.slot);
         setBookedSlots(bookedForDate);
+      } else {
+        setBookedSlots([]);
       }
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
@@ -66,9 +69,8 @@ const BookingForm = () => {
     }
   }, [id, formData.date]);
 
+  // Fetch turf details once on mount
   useEffect(() => {
-    fetchBookings();
-
     const fetchTurfDetails = async () => {
       try {
         const res = await axiosInstance.get(`/turfs/${id}`, getTokenConfig());
@@ -81,7 +83,12 @@ const BookingForm = () => {
     };
 
     fetchTurfDetails();
-  }, [fetchBookings, id]);
+  }, [id]);
+
+  // Fetch bookings on mount and whenever fetchBookings changes
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
 
   // Refresh booked slots when date changes
   useEffect(() => {
@@ -96,16 +103,16 @@ const BookingForm = () => {
 
     if (name === "date" && disabledDates.includes(value)) {
       alert("This date is fully booked. Please choose another date.");
-      setFormData((prev) => ({ ...prev, date: "", slot: "" }));
+      setFormData(prev => ({ ...prev, date: "", slot: "" }));
       setBookedSlots([]);
       return;
     }
 
     if (name === "date") {
       setBookedSlots([]);
-      setFormData((prev) => ({ ...prev, date: value, slot: "" }));
+      setFormData(prev => ({ ...prev, date: value, slot: "" }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -117,6 +124,7 @@ const BookingForm = () => {
       const userEmail = sessionStorage.getItem("email");
       if (!userEmail) {
         alert("User not logged in.");
+        setIsSubmitting(false);
         return;
       }
 

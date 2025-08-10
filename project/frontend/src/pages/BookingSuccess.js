@@ -27,21 +27,19 @@ const BookingSuccess = () => {
     }
   }, [id]);
 
-  // Countdown + redirect
+  // Countdown and redirect after 5 seconds
   useEffect(() => {
-    const countdown = setInterval(() => {
-      setSecondsLeft((prev) => prev - 1);
+    if (secondsLeft <= 0) {
+      navigate("/slot");
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSecondsLeft(secondsLeft - 1);
     }, 1000);
 
-    const redirectTimer = setTimeout(() => {
-      navigate("/slot");
-    }, 5000);
-
-    return () => {
-      clearInterval(countdown);
-      clearTimeout(redirectTimer);
-    };
-  }, [navigate]);
+    return () => clearTimeout(timer);
+  }, [secondsLeft, navigate]);
 
   if (loading) {
     return (
@@ -61,12 +59,8 @@ const BookingSuccess = () => {
 
         {booking ? (
           <div className="success-details">
-            <p>
-              <b>Name:</b> {booking.userName}
-            </p>
-            <p>
-              <b>Email:</b> {booking.userEmail}
-            </p>
+            <p><b>Name:</b> {booking.userName}</p>
+            <p><b>Email:</b> {booking.userEmail}</p>
             <p>
               <b>Date:</b>{" "}
               {new Date(booking.date).toLocaleDateString("en-IN", {
@@ -76,15 +70,9 @@ const BookingSuccess = () => {
                 day: "numeric",
               })}
             </p>
-            <p>
-              <b>Time:</b> {booking.slot}
-            </p>
-            <p>
-              <b>Price:</b> ₹{booking.price}
-            </p>
-            <p>
-              <b>Turf:</b> {booking.turfName}
-            </p>
+            <p><b>Time:</b> {booking.slot}</p>
+            <p><b>Price:</b> ₹{booking.price}</p>
+            <p><b>Turf:</b> {booking.turfName}</p>
           </div>
         ) : (
           <p style={{ color: "red" }}>Booking not found.</p>

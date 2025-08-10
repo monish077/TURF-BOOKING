@@ -34,7 +34,7 @@ function VerifyEmail() {
     } else {
       setMessage("Verification token not found in the URL.");
     }
-  }, [location.search, navigate]);
+  }, [location.search, navigate]); // Correct dependencies included
 
   return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
