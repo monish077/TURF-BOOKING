@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosInstance from "../services/Api"; // ✅ Using your centralized Axios config
+import { sendBookingConfirmation } from "../services/Api"; // ✅ Named import
 
 const PaymentPage = () => {
   const { bookingId } = useParams();
@@ -11,23 +11,40 @@ const PaymentPage = () => {
     try {
       setLoading(true);
 
-      // Simulate payment process delay
-      setTimeout(async () => {
-        await axiosInstance.get(`/bookings/send-confirmation/${bookingId}`, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-          withCredentials: true,
-        });
+      // Simulate payment delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        navigate("/payment-success");
-      }, 1500);
+      // Send confirmation
+      await sendBookingConfirmation(bookingId);
+
+      navigate("/payment-success");
     } catch (error) {
       console.error("❌ Payment or email sending failed:", error);
       alert("Something went wrong during payment or email sending.");
+    } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Ensure fade-in keyframes are injected once
+  useEffect(() => {
+    const sheet = document.styleSheets[0];
+    if (sheet) {
+      try {
+        sheet.insertRule(
+          `
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `,
+          sheet.cssRules.length
+        );
+      } catch {
+        // Ignore if already exists
+      }
+    }
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -93,16 +110,5 @@ const styles = {
     transition: "background-color 0.2s ease",
   },
 };
-
-// ✅ Keyframes for smooth fade-in
-const styleSheet = document.styleSheets[0];
-if (styleSheet) {
-  styleSheet.insertRule(`
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  `, styleSheet.cssRules.length);
-}
 
 export default PaymentPage;
