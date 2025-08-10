@@ -14,9 +14,9 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // ✅ Change this when deploying
-    private static final String FRONTEND_URL = "https://turf-booking-frontend.vercel.app";
-    // private static final String FRONTEND_URL = "http://localhost:3000"; // For local testing
+    // Backend URL (update if your backend URL changes)
+    private static final String BACKEND_URL = "https://turf-booking-pp67.onrender.com";
+    // private static final String BACKEND_URL = "http://localhost:8080"; // For local testing
 
     private static final String SENDER_EMAIL = "monidhoni0007@gmail.com";
     private static final String SENDER_NAME = "Mars Arena Turf Booking";
@@ -26,7 +26,8 @@ public class EmailService {
      */
     public void sendVerificationEmail(User user) {
         String subject = "Verify your email for Turf Booking";
-        String verifyURL = FRONTEND_URL + "/verify-email?token=" + user.getVerificationToken();
+        // Changed here to point to backend API verify endpoint
+        String verifyURL = BACKEND_URL + "/api/users/verify?token=" + user.getVerificationToken();
 
         String content = "<p>Hello <strong>" + user.getName() + "</strong>,</p>"
                 + "<p>Thanks for registering. Click the link below to verify your email:</p>"
@@ -41,7 +42,7 @@ public class EmailService {
      */
     public void sendResetPasswordEmail(User user) {
         String subject = "Reset your password - Turf Booking";
-        String resetURL = FRONTEND_URL + "/reset-password?token=" + user.getResetPasswordToken();
+        String resetURL = BACKEND_URL + "/reset-password?token=" + user.getResetPasswordToken();
 
         String content = "<p>Hello <strong>" + user.getName() + "</strong>,</p>"
                 + "<p>You requested a password reset. Click below to reset your password:</p>"
