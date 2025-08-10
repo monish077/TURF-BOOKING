@@ -22,13 +22,23 @@ const PaymentSuccess = () => {
 
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
+      <div style={{ ...styles.card, animation: "fadeIn 0.5s ease-in-out" }}>
         <h2 style={styles.title}>✅ Payment Successful!</h2>
         <p style={styles.text}>Check your email for booking details.</p>
         <p style={styles.text}>
           Redirecting to Slots page in <strong>{countdown}</strong> seconds...
         </p>
       </div>
+
+      {/* Add animation styles inside a style tag */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `}
+      </style>
     </div>
   );
 };
@@ -52,7 +62,6 @@ const styles = {
     boxShadow: "0px 0px 15px rgba(0,0,0,0.3)",
     width: "100%",
     maxWidth: "400px",
-    animation: "fadeIn 0.5s ease-in-out",
   },
   title: {
     fontSize: "24px",
@@ -63,16 +72,5 @@ const styles = {
     margin: "10px 0",
   },
 };
-
-// ✅ Add keyframes for smooth fade-in
-const styleSheet = document.styleSheets[0];
-if (styleSheet) {
-  styleSheet.insertRule(`
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  `, styleSheet.cssRules.length);
-}
 
 export default PaymentSuccess;
