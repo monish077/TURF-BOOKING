@@ -9,7 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -26,6 +27,10 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * Registers a new user with encoded password, disabled status and a verification token.
+     * Sends a verification email after saving.
+     */
     @Transactional
     public User registerUser(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -45,6 +50,10 @@ public class UserService {
         return savedUser;
     }
 
+    /**
+     * Confirms the user email based on the verification token.
+     * Enables the user account if token is valid.
+     */
     public boolean confirmEmail(String token) {
         Optional<User> userOpt = userRepository.findByVerificationToken(token);
         if (userOpt.isPresent()) {
@@ -63,6 +72,10 @@ public class UserService {
         return false;
     }
 
+    /**
+     * Authenticates user by email and password.
+     * Throws if email not verified.
+     */
     public Optional<User> loginUser(String email, String rawPassword) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isPresent()) {
@@ -79,6 +92,9 @@ public class UserService {
         return Optional.empty();
     }
 
+    /**
+     * Sends password reset link by generating a reset token and emailing it.
+     */
     public void sendPasswordResetLink(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isPresent()) {
@@ -91,6 +107,9 @@ public class UserService {
         }
     }
 
+    /**
+     * Resets the password given a valid reset token and new password.
+     */
     public boolean resetPassword(String token, String newPassword) {
         Optional<User> optionalUser = userRepository.findByResetPasswordToken(token);
         if (optionalUser.isPresent()) {

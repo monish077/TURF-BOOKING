@@ -28,7 +28,8 @@ public class UserController {
     private JwtUtil jwtUtil;
 
     /**
-     * ✅ Register a new user
+     * Register a new user.
+     * Sends verification email after successful registration.
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -45,7 +46,8 @@ public class UserController {
     }
 
     /**
-     * ✅ Verify email with token
+     * Verify email with token.
+     * Called by frontend during email verification.
      */
     @GetMapping("/verify")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
@@ -58,7 +60,8 @@ public class UserController {
     }
 
     /**
-     * ✅ Login user
+     * Login user with email and password.
+     * Returns JWT token and user info if successful.
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
@@ -78,7 +81,7 @@ public class UserController {
     }
 
     /**
-     * ✅ Forgot password (send reset link)
+     * Forgot password: send reset password link to email.
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
@@ -93,7 +96,7 @@ public class UserController {
     }
 
     /**
-     * ✅ Reset password with token
+     * Reset password using token and new password.
      */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
@@ -109,7 +112,7 @@ public class UserController {
     }
 
     /**
-     * ✅ Test email endpoint
+     * Test sending an email.
      */
     @GetMapping("/test-mail")
     public ResponseEntity<?> sendTestMail() {
