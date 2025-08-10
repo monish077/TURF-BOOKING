@@ -9,6 +9,7 @@ function VerifyEmail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Parse the token from query params
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
 
@@ -16,13 +17,14 @@ function VerifyEmail() {
     console.log("🔍 Extracted token:", token);
 
     if (token) {
+      // Call backend API to verify email with the token
       axiosInstance
         .get(`/users/verify?token=${token}`)
         .then((res) => {
           setMessage(res.data.message || "Email verified successfully!");
           setLoading(false);
 
-          // Redirect to success page after short delay
+          // Redirect to a confirmation page or home after 1.5 seconds
           setTimeout(() => {
             navigate("/email-verified", { replace: true });
           }, 1500);
@@ -30,7 +32,7 @@ function VerifyEmail() {
         .catch((err) => {
           console.error("❌ Verification failed:", err);
           setMessage(
-            err.response?.data?.error || // Note: backend error uses "error" key
+            err.response?.data?.error ||
               "Verification failed. Invalid or expired token."
           );
           setLoading(false);
