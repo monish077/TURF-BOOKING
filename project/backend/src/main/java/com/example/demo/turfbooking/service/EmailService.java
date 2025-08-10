@@ -15,7 +15,7 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     // Frontend URL for links - CHANGE if your frontend URL changes
-    private static final String FRONTEND_URL = "https://turf-booking-frontend.vercel.app";
+    private static final String FRONTEND_URL = "https://turf-booking-seven.vercel.app";
     // private static final String FRONTEND_URL = "http://localhost:3000"; // For local dev
 
     private static final String SENDER_EMAIL = "monidhoni0007@gmail.com";
