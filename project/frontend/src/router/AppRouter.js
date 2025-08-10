@@ -23,17 +23,21 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import PaymentSuccess from "../pages/PaymentSuccess";
 
-// 🔹 Role-based PrivateRoute Wrapper
+// Role-based private route wrapper
 const PrivateRoute = ({ children, allowedRoles }) => {
   const token = sessionStorage.getItem("token");
   const role = sessionStorage.getItem("role");
 
   if (!token) {
+    // Not logged in, redirect to login
     return <Navigate to="/login" replace />;
   }
+
   if (!allowedRoles.includes(role)) {
+    // Logged in but role not allowed, redirect to home
     return <Navigate to="/" replace />;
   }
+
   return children;
 };
 
@@ -41,7 +45,7 @@ const AppRouter = () => {
   return (
     <Router>
       <Routes>
-        {/* 🌍 Public Routes */}
+        {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -50,7 +54,7 @@ const AppRouter = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* 👤 User Routes */}
+        {/* User routes (require USER role) */}
         <Route
           path="/slot"
           element={
@@ -108,7 +112,7 @@ const AppRouter = () => {
           }
         />
 
-        {/* 🛠 Admin Routes */}
+        {/* Admin routes (require ADMIN role) */}
         <Route
           path="/admin/dashboard"
           element={
@@ -126,7 +130,7 @@ const AppRouter = () => {
           }
         />
 
-        {/* 🔄 Catch-All Redirect */}
+        {/* Catch-all redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

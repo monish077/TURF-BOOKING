@@ -6,16 +6,17 @@ const EmailVerified = () => {
   const [secondsLeft, setSecondsLeft] = useState(5);
 
   useEffect(() => {
-    // Countdown timer
+    // Countdown timer: decrease secondsLeft by 1 every second
     const countdown = setInterval(() => {
       setSecondsLeft((prev) => prev - 1);
     }, 1000);
 
-    // Redirect after 5 seconds
+    // Redirect to login after 5 seconds
     const redirectTimer = setTimeout(() => {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }, 5000);
 
+    // Cleanup timers on unmount
     return () => {
       clearInterval(countdown);
       clearTimeout(redirectTimer);
@@ -28,9 +29,10 @@ const EmailVerified = () => {
         <h2 style={styles.title}>✅ Email Verified!</h2>
         <p style={styles.message}>Your email has been successfully verified.</p>
         <p style={styles.redirect}>
-          Redirecting to login page in <strong>{secondsLeft}</strong> seconds...
+          Redirecting to login page in <strong>{secondsLeft}</strong> second
+          {secondsLeft !== 1 ? "s" : ""}...
         </p>
-        <button style={styles.button} onClick={() => navigate("/login")}>
+        <button style={styles.button} onClick={() => navigate("/login", { replace: true })}>
           Go to Login Now
         </button>
       </div>
