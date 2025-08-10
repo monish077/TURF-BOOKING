@@ -42,11 +42,6 @@ const Landing = () => {
           <Link to="/login">
             <button className="btn-primary">Get Started</button>
           </Link>
-          <Link to="/register">
-            <button className="btn-secondary" style={{ marginLeft: "10px" }}>
-              Create Account
-            </button>
-          </Link>
         </div>
       </section>
 
