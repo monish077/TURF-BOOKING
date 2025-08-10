@@ -17,25 +17,23 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allowed origins - update with your actual frontend URLs
+        // Add all frontend URLs you want to allow here
         config.setAllowedOriginPatterns(Arrays.asList(
+            "https://turf-booking-seven.vercel.app",   // your current frontend domain
             "https://turf-booking-frontend.vercel.app",
             "https://turf-booking-an7sfm399-monishs-projects-29844c66.vercel.app",
             "http://localhost:3000"
         ));
 
-        // Allowed HTTP methods
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        // Allowed headers - "*" allows all headers
         config.setAllowedHeaders(Arrays.asList("*"));
 
-        // Allow credentials (Authorization headers, cookies)
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        // Apply CORS config to all API endpoints
+        // Apply CORS config to all paths
         source.registerCorsConfiguration("/**", config);
 
         return source;
