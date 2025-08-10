@@ -32,14 +32,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Disable CSRF for REST APIs (usually safe when using JWT)
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> {}) // Enable CORS using global config
 
+            // Enable CORS (configured globally via CorsConfig)
+            .cors(cors -> {})
+
+            // Configure URL authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Allow preflight OPTIONS requests to pass without auth
+                // Allow OPTIONS calls for preflight (CORS)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Public endpoints (registration, login, verification, etc)
+                // Public endpoints that do not require authentication
                 .requestMatchers(
                     "/api/users/register",
                     "/api/users/login",
@@ -54,7 +58,7 @@ public class SecurityConfig {
                     "/uploads/**"
                 ).permitAll()
 
-                // Public GET access to uploaded static files
+                // Public GET access to uploaded files
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                 // Role-based access control
@@ -62,27 +66,29 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/api/bookings/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 
-                // All other turf endpoints require authentication
+                // Other turf-related APIs require authentication
                 .requestMatchers("/api/turfs/**").authenticated()
 
-                // Catch all others require authentication
+                // All other requests require authentication
                 .anyRequest().authenticated()
             )
 
-            // Stateless session management (no sessions, JWT based)
+            // Use stateless session management since JWT is used
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // Register JWT filter before username/password authentication filter
+            // Add JWT authentication filter before the default username/password filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // Password encoder bean using BCrypt
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Expose AuthenticationManager bean to be used for authentication elsewhere
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

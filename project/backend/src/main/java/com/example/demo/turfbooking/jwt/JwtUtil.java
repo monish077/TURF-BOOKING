@@ -14,13 +14,12 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // ✅ Alias method for compatibility with controller
-public String extractUsername(String token) {
-    return extractEmail(token);
-}
+    // Alias method for compatibility with controller
+    public String extractUsername(String token) {
+        return extractEmail(token);
+    }
 
-
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String secret;
 
     @Value("${jwt.expiration}")
@@ -28,14 +27,14 @@ public String extractUsername(String token) {
 
     private SecretKey secretKey;
 
-    // ✅ Initialize the secret key on application startup
+    // Initialize the secret key after bean construction
     @PostConstruct
     public void init() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        this.secretKey = Keys.hmacShaKeyFor(keyBytes); // Uses HS512
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes); // Uses HS512 algorithm
     }
 
-    // ✅ Generate a JWT with email and role
+    // Generate a JWT token containing email as subject and role as claim
     public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
@@ -46,7 +45,7 @@ public String extractUsername(String token) {
                 .compact();
     }
 
-    // ✅ Extract all claims from a JWT token
+    // Extract all claims from the JWT token
     public Claims extractClaims(String token) {
         try {
             return Jwts.parserBuilder()
@@ -59,22 +58,22 @@ public String extractUsername(String token) {
         }
     }
 
-    // ✅ Extract email (subject) from JWT
+    // Extract the email (subject) from the JWT token
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
     }
 
-    // ✅ Extract role from JWT
+    // Extract the user role from the JWT token
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
     }
 
-    // ✅ Check if token is expired
+    // Check if the token is expired
     public boolean isTokenExpired(String token) {
         return extractClaims(token).getExpiration().before(new Date());
     }
 
-    // ✅ Validate token using UserDetails
+    // Validate the token by matching email and checking expiration
     public boolean validateToken(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
         return email.equals(userDetails.getUsername()) && !isTokenExpired(token);

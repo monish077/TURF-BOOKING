@@ -28,10 +28,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
         final String authHeader = request.getHeader("Authorization");
         String email = null;
         String jwt = null;
 
+        // Extract JWT token from Authorization header
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
             try {
@@ -41,9 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+        // If email is extracted and authentication is not already set in context
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Load user details from DB or cache
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+
+            // Validate token against user details
             if (jwtUtil.validateToken(jwt, userDetails)) {
+                // Create auth token and set in security context
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
@@ -52,9 +59,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+            } else {
+                logger.warn("Invalid JWT token for user: " + email);
             }
         }
 
+        // Continue filter chain regardless
         filterChain.doFilter(request, response);
     }
 }
