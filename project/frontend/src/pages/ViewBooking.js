@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { getBookingsByUserEmail, deleteBooking } from "../services/Api";
+import axiosInstance from "../api/axiosConfig"; // ✅ Shared axios config
 import "../assets/styles/viewbookings.css";
 
 const ViewBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const getTokenConfig = () => {
+    const token = sessionStorage.getItem("token");
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    };
+  };
 
   const fetchBookings = async () => {
     const userEmail = sessionStorage.getItem("email");
@@ -14,7 +23,7 @@ const ViewBookings = () => {
     }
 
     try {
-      const res = await getBookingsByUserEmail(userEmail);
+      const res = await axiosInstance.get(`/bookings/user/${userEmail}`, getTokenConfig());
       setBookings(res.data);
     } catch (err) {
       console.error("❌ Failed to fetch bookings:", err);
@@ -25,8 +34,12 @@ const ViewBookings = () => {
 
   const handleCancel = async (id) => {
     if (window.confirm("Are you sure you want to cancel this booking?")) {
-      await deleteBooking(id);
-      fetchBookings(); // refresh
+      try {
+        await axiosInstance.delete(`/bookings/${id}`, getTokenConfig());
+        fetchBookings(); // refresh list after deletion
+      } catch (err) {
+        console.error("❌ Failed to cancel booking:", err);
+      }
     }
   };
 
@@ -59,7 +72,10 @@ const ViewBookings = () => {
                 <td>{b.slot}</td>
                 <td>₹{b.price}</td>
                 <td>
-                  <button className="cancel-btn" onClick={() => handleCancel(b.id)}>
+                  <button
+                    className="cancel-btn"
+                    onClick={() => handleCancel(b.id)}
+                  >
                     Cancel
                   </button>
                 </td>

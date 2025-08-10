@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../api/axiosConfig"; // ✅ Use shared axios config
 
 function VerifyEmail() {
   const location = useLocation();
@@ -15,11 +15,11 @@ function VerifyEmail() {
     console.log("🔍 Extracted token:", token);
 
     if (token) {
-      axios
-        .get(`http://localhost:8080/api/users/verify?token=${token}`)
+      axiosInstance
+        .get(`/users/verify?token=${token}`) // ✅ Base URL handled in axiosConfig.js
         .then((res) => {
           setMessage(res.data.message);
-          navigate("/email-verified"); // 🔁 Go to success screen
+          navigate("/email-verified"); // 🔁 Redirect to success screen
         })
         .catch((err) => {
           console.error("❌ Verification failed:", err);

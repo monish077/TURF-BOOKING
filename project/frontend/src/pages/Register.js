@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { registerUser } from "../services/Api";
 import "../assets/styles/home.css";
 import { Link } from "react-router-dom";
-import turfImg from "../assets/images/turffield.jpg"; // Ensure this file exists
+import turfImg from "../assets/images/turffield.jpg";
 
 function Register() {
   const [form, setForm] = useState({
@@ -14,25 +14,30 @@ function Register() {
   const [error, setError] = useState("");
   const [showPopup, setShowPopup] = useState(false);
 
+  // ✅ Handle form input changes
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
       const response = await registerUser(form);
-      if (response.status === 200 || response.status === 201) {
+
+      if (response.status >= 200 && response.status < 300) {
         setShowPopup(true);
       } else {
         setError("Registration failed ❌");
       }
     } catch (err) {
-      console.error("Registration error:", err);
+      console.error("❌ Registration error:", err);
       const errorMsg =
-        err.response?.data?.error || "Registration failed. Please try again.";
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Registration failed. Please try again.";
       setError(errorMsg);
     }
   };
@@ -45,9 +50,13 @@ function Register() {
           <div style={popupStyles.popup}>
             <h2 style={{ color: "#2ecc71" }}>✅ Registration Successful</h2>
             <p>
-              Please check your email and click the verification link to activate your account.
+              Please check your email and click the verification link to
+              activate your account.
             </p>
-            <button style={popupStyles.button} onClick={() => setShowPopup(false)}>
+            <button
+              style={popupStyles.button}
+              onClick={() => setShowPopup(false)}
+            >
               OK
             </button>
           </div>
@@ -110,7 +119,9 @@ function Register() {
             </select>
           </div>
 
-          {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+          {error && (
+            <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
+          )}
 
           <button type="submit" className="login-btn">
             Sign Up

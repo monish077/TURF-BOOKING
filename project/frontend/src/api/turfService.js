@@ -1,8 +1,12 @@
 import axiosInstance from "./axiosConfig";
 
-export const getAllTurfs = async () => {
+// ✅ Optionally pass adminEmail to filter turfs for a specific admin
+export const getAllTurfs = async (adminEmail) => {
   try {
-    const response = await axiosInstance.get("/turfs");
+    const url = adminEmail
+      ? `/turfs/admin/${encodeURIComponent(adminEmail)}`
+      : "/turfs"; // fallback to all turfs
+    const response = await axiosInstance.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching turfs: ", error);

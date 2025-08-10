@@ -2,11 +2,12 @@ import axios from "axios";
 
 const API_BASE_URL = "https://turf-booking-pp67.onrender.com/api";
 
-
 // 🔐 Auth header using JWT token from sessionStorage
 const authHeader = () => {
   const token = sessionStorage.getItem("token");
-  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  return token
+    ? { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+    : { withCredentials: true };
 };
 
 // ================== AUTH (User & Admin) ==================
@@ -31,12 +32,15 @@ export const forgotPassword = (email) =>
 export const resetPassword = (token, newPassword) =>
   axios.post(`${API_BASE_URL}/users/reset-password`, { token, newPassword });
 
-
 // ================== TURF APIs ==================
 
-// ✅ Get all turfs added by current admin
-export const getAllTurfs = () =>
-  axios.get(`${API_BASE_URL}/turfs/admin`, authHeader());
+// ✅ Get all turfs added by current admin (optional email filter)
+export const getAllTurfs = (adminEmail) => {
+  const url = adminEmail
+    ? `${API_BASE_URL}/turfs/admin/${encodeURIComponent(adminEmail)}`
+    : `${API_BASE_URL}/turfs/admin`;
+  return axios.get(url, authHeader());
+};
 
 // ✅ Get all public turfs (for users)
 export const getPublicTurfs = () =>
@@ -67,7 +71,6 @@ export const uploadImages = (turfId, formData) =>
     },
     withCredentials: true,
   });
-
 
 // ================== BOOKING APIs ==================
 

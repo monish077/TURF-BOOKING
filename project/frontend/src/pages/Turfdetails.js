@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../api/axiosConfig"; 
 import "../assets/styles/turfdetails.css";
 
 const TurfDetails = () => {
@@ -13,14 +13,12 @@ const TurfDetails = () => {
       try {
         const token = sessionStorage.getItem("token");
 
-        const response = await axios.get(
-          `http://localhost:8080/api/turfs/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axiosInstance.get(`/turfs/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         setTurf(response.data);
       } catch (error) {
         console.error("Error fetching turf:", error);
@@ -61,7 +59,7 @@ const TurfDetails = () => {
               <img
                 key={idx}
                 src={url}
-                alt={turf.name} // ✅ Removed redundant "Image" word
+                alt={turf.name}
                 className="turf-carousel-image"
               />
             ))

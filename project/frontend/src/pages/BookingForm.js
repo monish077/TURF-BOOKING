@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../api/axiosConfig";
 import "../assets/styles/bookingform.css";
 
 const generateSlots = () => {
@@ -28,40 +28,32 @@ const BookingForm = () => {
   const [turfName, setTurfName] = useState("");
   const [turfPrice, setTurfPrice] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const getToday = () => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  };
+  const getToday = () => new Date().toISOString().split("T")[0];
 
-  const getTokenConfig = () => {
-    const token = sessionStorage.getItem("token");
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      withCredentials: true
-    };
-  };
+  const getTokenConfig = () => ({
+    headers: {
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`
+    }
+  });
 
-  const updateBookings = useCallback(async () => {
+  const fetchBookings = useCallback(async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:8080/api/bookings/turf/${id}`,
-        getTokenConfig()
-      );
-
+      const res = await axiosInstance.get(`/bookings/turf/${id}`, getTokenConfig());
       const turfBookings = res.data;
 
+      // Count bookings per date
       const dateCounts = turfBookings.reduce((acc, booking) => {
         acc[booking.date] = (acc[booking.date] || 0) + 1;
         return acc;
       }, {});
-      const fullDates = Object.keys(dateCounts).filter(
-        (date) => dateCounts[date] >= 24
-      );
+
+      // Fully booked dates
+      const fullDates = Object.keys(dateCounts).filter((date) => dateCounts[date] >= 24);
       setDisabledDates(fullDates);
 
+      // Set booked slots for selected date
       if (formData.date) {
         const bookedForDate = turfBookings
           .filter((booking) => booking.date === formData.date)
@@ -70,40 +62,51 @@ const BookingForm = () => {
       }
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
+      alert("Error fetching booking data.");
     }
   }, [id, formData.date]);
 
   useEffect(() => {
-    updateBookings();
+    fetchBookings();
 
     const fetchTurfDetails = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:8080/api/turfs/${id}`,
-          getTokenConfig()
-        );
-        const turf = res.data;
-        setTurfName(turf.name);
-        setTurfPrice(turf.pricePerHour);
+        const res = await axiosInstance.get(`/turfs/${id}`, getTokenConfig());
+        setTurfName(res.data.name);
+        setTurfPrice(res.data.pricePerHour);
       } catch (err) {
         console.error("Failed to fetch turf details:", err);
+        alert("Error fetching turf details.");
       }
     };
 
     fetchTurfDetails();
-  }, [updateBookings, id]);
+  }, [fetchBookings, id]);
+
+  // Refresh booked slots when date changes
+  useEffect(() => {
+    if (formData.date) {
+      setLoadingSlots(true);
+      fetchBookings().finally(() => setLoadingSlots(false));
+    }
+  }, [formData.date, fetchBookings]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "date" && disabledDates.includes(value)) {
       alert("This date is fully booked. Please choose another date.");
-      setFormData((prev) => ({ ...prev, date: "" }));
+      setFormData((prev) => ({ ...prev, date: "", slot: "" }));
       setBookedSlots([]);
       return;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "date") {
+      setBookedSlots([]);
+      setFormData((prev) => ({ ...prev, date: value, slot: "" }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -112,7 +115,6 @@ const BookingForm = () => {
 
     try {
       const userEmail = sessionStorage.getItem("email");
-
       if (!userEmail) {
         alert("User not logged in.");
         return;
@@ -126,17 +128,11 @@ const BookingForm = () => {
         price: turfPrice
       };
 
-      const res = await axios.post(
-        `http://localhost:8080/api/bookings`,
-        bookingData,
-        getTokenConfig()
-      );
-
-      const newBookingId = res.data.id;
-      navigate(`/payment/${newBookingId}`);
+      const res = await axiosInstance.post(`/bookings`, bookingData, getTokenConfig());
+      navigate(`/payment/${res.data.id}`);
     } catch (err) {
       console.error("Booking failed ❌", err);
-      alert("Failed to create booking. Try again.");
+      alert(err.response?.data?.error || "Failed to create booking. Try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -172,23 +168,27 @@ const BookingForm = () => {
           {formData.date && (
             <>
               <label>Time Slot:</label>
-              <select
-                name="slot"
-                value={formData.slot}
-                onChange={handleChange}
-                required
-              >
-                <option value="">-- Select Slot --</option>
-                {generateSlots().map((slot, index) => (
-                  <option
-                    key={index}
-                    value={slot}
-                    disabled={bookedSlots.includes(slot)}
-                  >
-                    {slot}
-                  </option>
-                ))}
-              </select>
+              {loadingSlots ? (
+                <p>Loading available slots...</p>
+              ) : (
+                <select
+                  name="slot"
+                  value={formData.slot}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">-- Select Slot --</option>
+                  {generateSlots().map((slot, index) => (
+                    <option
+                      key={index}
+                      value={slot}
+                      disabled={bookedSlots.includes(slot)}
+                    >
+                      {slot} {bookedSlots.includes(slot) ? " (Booked)" : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
             </>
           )}
 

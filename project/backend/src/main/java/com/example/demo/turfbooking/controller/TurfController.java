@@ -23,7 +23,7 @@ import java.util.Optional;
 @RequestMapping("/api/turfs")
 @CrossOrigin(origins = {
         "https://turf-booking-frontend.vercel.app",
-        "http://localhost:3000"
+        "https://turf-booking-an7sfm399-monishs-projects-29844c66.vercel.app"
 })
 public class TurfController {
 

@@ -16,7 +16,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/bookings")
-@CrossOrigin(origins = "http://localhost:3000")
 public class BookingController {
 
     @Autowired
@@ -61,18 +60,18 @@ public class BookingController {
             String token = authHeader.replace("Bearer ", "");
             String adminEmail = jwtUtil.extractUsername(token); // Extract from JWT
 
-            System.out.println("📩 Fetching bookings for Admin: " + adminEmail); // Log email
+            System.out.println("📩 Fetching bookings for Admin: " + adminEmail);
 
             List<Booking> bookings = bookingService.getBookingsByAdminEmail(adminEmail);
             return ResponseEntity.ok(bookings);
 
         } catch (Exception e) {
-            e.printStackTrace(); // 🔥 Print actual error
+            e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to fetch bookings for admin");
         }
     }
 
-    // ✅ Get all bookings (for debugging/admin super-view)
+    // ✅ Get all bookings
     @GetMapping("/all")
     public ResponseEntity<?> getAllBookings() {
         try {
@@ -108,7 +107,7 @@ public class BookingController {
         }
     }
 
-    // ✅ Send confirmation email after successful booking
+    // ✅ Send confirmation email
     @GetMapping("/send-confirmation/{bookingId}")
     public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
         try {
@@ -133,12 +132,12 @@ public class BookingController {
         }
     }
 
-    // ✅ Get a specific booking by ID (💥 Fix applied here!)
+    // ✅ Get booking by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getBookingById(@PathVariable Long id) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
-            return optionalBooking.<ResponseEntity<?>>map(b -> ResponseEntity.ok(b))
+            return optionalBooking.<ResponseEntity<?>>map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.status(404).body("❌ Booking not found for ID: " + id));
         } catch (Exception e) {
             e.printStackTrace();

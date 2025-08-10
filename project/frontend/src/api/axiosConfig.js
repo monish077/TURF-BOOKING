@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080",  // your Spring Boot backend base URL
+  baseURL: "https://turf-booking-pp67.onrender.com/api",
+  withCredentials: true, // if you use cookies/session, else remove this
 });
 
 export default axiosInstance;

@@ -5,6 +5,7 @@ import {
   updateTurf,
   uploadImages,
 } from "../services/Api";
+import axiosInstance from "../services/axiosInstance"; // ✅ shared axios config
 import "../assets/styles/admin.css";
 import { useNavigate } from "react-router-dom";
 
@@ -21,18 +22,20 @@ const AdminDashboard = () => {
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [editingTurfId, setEditingTurfId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const adminEmail = sessionStorage.getItem("email");
 
+  // ✅ Fetch turfs for logged-in admin
   const fetchTurfs = useCallback(async () => {
     try {
-      const res = await getAllTurfs(adminEmail);
-      setTurfs(res.data);
+      const res = await getAllTurfs();
+      setTurfs(res.data || []);
     } catch (err) {
-      console.error("Error fetching turfs:", err);
+      console.error("❌ Error fetching turfs:", err);
+      alert("Failed to load turfs.");
     }
-  }, [adminEmail]);
+  }, []);
 
   useEffect(() => {
     fetchTurfs();
@@ -46,8 +49,7 @@ const AdminDashboard = () => {
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setImageFiles(files);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    setImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
   const resetForm = () => {
@@ -66,13 +68,16 @@ const AdminDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const token = sessionStorage.getItem("token");
 
       if (editingTurfId) {
+        // ✅ Update existing turf
         await updateTurf(editingTurfId, newTurf);
-        alert("Turf updated successfully!");
+        alert("✅ Turf updated successfully!");
       } else {
+        // ✅ Add new turf
         const formData = new FormData();
         formData.append("name", newTurf.name);
         formData.append("location", newTurf.location);
@@ -82,51 +87,46 @@ const AdminDashboard = () => {
         formData.append("availableSlots", newTurf.availableSlots);
 
         if (imageFiles.length > 0) {
-          formData.append("image", imageFiles[0]);
+          formData.append("image", imageFiles[0]); // main image
         }
 
-        const response = await fetch("http://localhost:8080/api/turfs/add-with-image", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+        const response = await axiosInstance.post("/turfs/add-with-image", formData, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error("Failed to add turf: " + errText);
-        }
+        const createdTurfId = response?.data?.id;
 
-        const createdTurf = await response.json();
-        const createdTurfId = createdTurf?.id;
-
-        // Upload remaining images (if any)
-        if (imageFiles.length > 1) {
+        // Upload remaining images
+        if (imageFiles.length > 1 && createdTurfId) {
           const moreImagesForm = new FormData();
-          imageFiles.slice(1).forEach((file) => moreImagesForm.append("images", file));
+          imageFiles.slice(1).forEach((file) =>
+            moreImagesForm.append("images", file)
+          );
           await uploadImages(createdTurfId, moreImagesForm);
         }
 
-        alert("Turf added successfully with images!");
+        alert("✅ Turf added successfully with images!");
       }
 
       resetForm();
       fetchTurfs();
     } catch (err) {
-      console.error("Error saving turf:", err);
+      console.error("❌ Error saving turf:", err);
       alert("Failed to save turf: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this turf?")) {
-      try {
-        await deleteTurf(id);
-        fetchTurfs();
-      } catch (err) {
-        console.error("Error deleting turf:", err);
-      }
+    if (!window.confirm("Are you sure you want to delete this turf?")) return;
+    try {
+      await deleteTurf(id);
+      alert("🗑 Turf deleted successfully!");
+      fetchTurfs();
+    } catch (err) {
+      console.error("❌ Error deleting turf:", err);
+      alert("Failed to delete turf.");
     }
   };
 
@@ -147,7 +147,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      <h2>Admin Dashboard</h2>
+      <h2>{editingTurfId ? "✏ Edit Turf" : "🏟 Admin Dashboard"}</h2>
 
       <div className="btn-group" style={{ marginBottom: "20px" }}>
         <button onClick={() => navigate("/admin-bookings")} className="edit-btn">
@@ -217,9 +217,18 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        <button type="submit">
-          {editingTurfId ? "Update Turf" : "Add Turf"}
+        <button type="submit" disabled={loading}>
+          {loading
+            ? "Saving..."
+            : editingTurfId
+            ? "Update Turf"
+            : "Add Turf"}
         </button>
+        {editingTurfId && (
+          <button type="button" onClick={resetForm} className="cancel-btn">
+            Cancel Edit
+          </button>
+        )}
       </form>
 
       <div className="turf-list">

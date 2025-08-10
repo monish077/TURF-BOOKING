@@ -9,13 +9,18 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
-      const response = await loginUser({ email, password });
+      const response = await loginUser({
+        email: email.trim(),
+        password,
+      });
 
       if (response.status === 200 && response.data) {
         const { token, role, email: userEmail } = response.data;
@@ -36,11 +41,13 @@ function Login() {
           setError("Unknown role");
         }
       } else {
-        setError("Invalid credentials ❌");
+        setError("Invalid email or password ❌");
       }
     } catch (err) {
       console.error("❌ Login error:", err);
       setError(err.response?.data?.error || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,6 +66,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
 
@@ -70,6 +78,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -84,8 +93,16 @@ function Login() {
 
           {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
 
-          <button type="submit" className="login-btn">
-            Log In
+          <button
+            type="submit"
+            className="login-btn"
+            disabled={loading}
+            style={{
+              backgroundColor: loading ? "#aaa" : undefined,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
 

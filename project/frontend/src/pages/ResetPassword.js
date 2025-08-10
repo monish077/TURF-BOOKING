@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-import "../assets/styles/home.css"; // Reuse shared styles
+import axiosInstance from "../services/axiosInstance"; // ✅ use central axios config
+import "../assets/styles/home.css";
 import turfImg from "../assets/images/turffield.jpg";
 
 function ResetPassword() {
@@ -11,6 +11,7 @@ function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
 
+  // ✅ Extract token from query string
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const tokenParam = queryParams.get("token");
@@ -19,15 +20,22 @@ function ResetPassword() {
 
   const handleReset = async (e) => {
     e.preventDefault();
+
+    if (!token) {
+      setMessage("❌ Reset token missing or invalid.");
+      return;
+    }
+
     try {
-      await axios.post("http://localhost:8080/api/users/reset-password", {
+      await axiosInstance.post("/users/reset-password", {
         token,
         newPassword,
       });
+
       setMessage("✅ Password reset successful! Redirecting to login...");
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
-      console.error(err);
+      console.error("❌ Reset password error:", err);
       setMessage("❌ Failed to reset password. Token may be invalid or expired.");
     }
   };
@@ -55,7 +63,12 @@ function ResetPassword() {
           </button>
 
           {message && (
-            <p style={{ marginTop: "15px", color: message.includes("✅") ? "lightgreen" : "red" }}>
+            <p
+              style={{
+                marginTop: "15px",
+                color: message.includes("✅") ? "lightgreen" : "red",
+              }}
+            >
               {message}
             </p>
           )}

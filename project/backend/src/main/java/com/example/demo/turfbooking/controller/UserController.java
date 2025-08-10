@@ -12,7 +12,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {
+        "https://turf-booking-frontend.vercel.app",
+        "http://localhost:3000"
+})
 public class UserController {
 
     @Autowired
@@ -24,6 +27,9 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * ✅ Register a new user
+     */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
@@ -33,10 +39,14 @@ public class UserController {
                     "message", "Registration successful. Please verify your email."
             ));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
+    /**
+     * ✅ Verify email with token
+     */
     @GetMapping("/verify")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
         boolean verified = userService.confirmEmail(token);
@@ -47,6 +57,9 @@ public class UserController {
         }
     }
 
+    /**
+     * ✅ Login user
+     */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -64,6 +77,9 @@ public class UserController {
                 .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or email not verified.")));
     }
 
+    /**
+     * ✅ Forgot password (send reset link)
+     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -71,10 +87,14 @@ public class UserController {
             userService.sendPasswordResetLink(email);
             return ResponseEntity.ok(Map.of("message", "Reset link sent to your email."));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
+    /**
+     * ✅ Reset password with token
+     */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
         String token = request.get("token");
@@ -88,12 +108,16 @@ public class UserController {
         }
     }
 
+    /**
+     * ✅ Test email endpoint
+     */
     @GetMapping("/test-mail")
     public ResponseEntity<?> sendTestMail() {
         try {
             emailService.sendEmail("monidhoni0007@gmail.com", "Test Email", "This is a test email.");
             return ResponseEntity.ok("Test email sent successfully.");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Failed to send test email: " + e.getMessage());
         }
     }

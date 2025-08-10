@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getPublicTurfs } from "../services/Api";
-import "../assets/styles/slot.css";
 import { Link } from "react-router-dom";
+import "../assets/styles/slot.css";
 
 const Slot = () => {
   const [allTurfs, setAllTurfs] = useState([]);
@@ -11,18 +11,18 @@ const Slot = () => {
     const fetchTurfs = async () => {
       try {
         const response = await getPublicTurfs();
-        const backendTurfs = response.data;
+        const backendTurfs = response.data || [];
 
-        // ✅ Format turfs with proper image handling
+        // ✅ Format turfs and ensure image fallback
         const turfsWithImages = backendTurfs.map((turf) => ({
           id: turf.id,
-          name: turf.name,
-          location: turf.location,
+          name: turf.name || "Unnamed Turf",
+          location: turf.location || "Location not available",
           price: turf.pricePerHour ? `₹${turf.pricePerHour}` : "N/A",
           image:
-            turf.imageUrls && turf.imageUrls.length > 0
+            turf.imageUrls?.[0] && turf.imageUrls[0].trim() !== ""
               ? turf.imageUrls[0]
-              : "/default-turf.jpg", // fallback image if none uploaded
+              : "/default-turf.jpg", // fallback if no image
         }));
 
         setAllTurfs(turfsWithImages);
@@ -42,16 +42,25 @@ const Slot = () => {
       <nav className="navbar">
         <div className="logo">MARS ARENA</div>
         <ul className="nav-links">
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/view-bookings">My Bookings</Link></li>
-          <li><Link to="/contact">Contact</Link></li>
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          <li>
+            <Link to="/view-bookings">My Bookings</Link>
+          </li>
+          <li>
+            <Link to="/contact">Contact</Link>
+          </li>
         </ul>
       </nav>
 
       {/* Header */}
       <div className="slots-header">
         <h2>🎯 Find Your Perfect Play!</h2>
-        <p>Explore premium indoor/outdoor slots with seamless booking and excellent facilities.</p>
+        <p>
+          Explore premium indoor/outdoor turfs with seamless booking and
+          top-notch facilities.
+        </p>
       </div>
 
       {/* Turf Grid */}
@@ -65,7 +74,9 @@ const Slot = () => {
                 src={turf.image}
                 alt={`Thumbnail of ${turf.name}`}
                 className="turf-image"
-                onError={(e) => (e.target.src = "/default-turf.jpg")}
+                onError={(e) => {
+                  e.target.src = "/default-turf.jpg";
+                }}
               />
               <h4>{turf.name}</h4>
               <p>{turf.price} / hour</p>
@@ -76,7 +87,9 @@ const Slot = () => {
             </div>
           ))
         ) : (
-          <p className="loading-text">No turfs available currently. Please check back later.</p>
+          <p className="loading-text">
+            No turfs available right now. Please check back later.
+          </p>
         )}
       </div>
     </div>

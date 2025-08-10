@@ -1,23 +1,29 @@
 import React, { useState } from "react";
-import axios from "axios";
-import "../assets/styles/home.css"; // Reuse same CSS used in Login/Register
+import axiosInstance from "../services/axiosInstance"; // ✅ Use shared config
+import "../assets/styles/home.css";
+import turfImg from "../assets/images/turffield.jpg";
+import { Link } from "react-router-dom";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
     setError("");
+    setLoading(true);
 
     try {
-      await axios.post("http://localhost:8080/api/users/forgot-password", { email });
+      await axiosInstance.post("/users/forgot-password", { email: email.trim() });
       setMessage("✅ Reset link sent! Please check your email.");
     } catch (err) {
-      console.error(err);
+      console.error("❌ Forgot password error:", err);
       setError(err.response?.data?.error || "❌ Error sending reset link. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,25 +46,21 @@ function ForgotPassword() {
             />
           </div>
 
-          {message && <p style={{ color: "lightgreen" }}>{message}</p>}
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {message && <p style={{ color: "lightgreen", marginTop: "10px" }}>{message}</p>}
+          {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
 
-          <button type="submit" className="login-btn">
-            Send Reset Link
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
 
         <p className="signup-link" style={{ marginTop: "20px" }}>
-          <a href="/login">Back to Login</a>
+          <Link to="/login">⬅ Back to Login</Link>
         </p>
       </div>
 
       <div className="right-section">
-        <img
-          src={require("../assets/images/turffield.jpg")}
-          alt="Turf Field"
-          className="right-img"
-        />
+        <img src={turfImg} alt="Turf Field" className="right-img" />
       </div>
     </div>
   );

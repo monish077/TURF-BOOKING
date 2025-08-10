@@ -21,9 +21,9 @@ import EmailVerified from "../pages/EmailVerified";
 import VerifyEmail from "../pages/VerifyEmail";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
-import PaymentSuccess from "../pages/PaymentSuccess"; // ✅ added
+import PaymentSuccess from "../pages/PaymentSuccess";
 
-// ✅ Private route wrapper for role-based access
+// 🔹 Role-based PrivateRoute Wrapper
 const PrivateRoute = ({ children, allowedRoles }) => {
   const token = sessionStorage.getItem("token");
   const role = sessionStorage.getItem("role");
@@ -31,11 +31,9 @@ const PrivateRoute = ({ children, allowedRoles }) => {
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-
   if (!allowedRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
-
   return children;
 };
 
@@ -43,7 +41,7 @@ const AppRouter = () => {
   return (
     <Router>
       <Routes>
-        {/* ✅ Public Routes */}
+        {/* 🌍 Public Routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -52,7 +50,7 @@ const AppRouter = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* ✅ User Protected Routes */}
+        {/* 👤 User Routes */}
         <Route
           path="/slot"
           element={
@@ -110,7 +108,7 @@ const AppRouter = () => {
           }
         />
 
-        {/* ✅ Admin Protected Routes */}
+        {/* 🛠 Admin Routes */}
         <Route
           path="/admin/dashboard"
           element={
@@ -127,6 +125,9 @@ const AppRouter = () => {
             </PrivateRoute>
           }
         />
+
+        {/* 🔄 Catch-All Redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
