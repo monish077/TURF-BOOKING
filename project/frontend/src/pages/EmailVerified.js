@@ -1,28 +1,97 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
 
 const EmailVerified = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+
   const [secondsLeft, setSecondsLeft] = useState(5);
+  const [status, setStatus] = useState("verifying"); // "verifying", "success", "error"
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    // Countdown timer: decrease secondsLeft by 1 every second
-    const countdown = setInterval(() => {
-      setSecondsLeft((prev) => prev - 1);
-    }, 1000);
+    if (!token) {
+      setStatus("error");
+      setErrorMessage("Verification token is missing.");
+      return;
+    }
 
-    // Redirect to login after 5 seconds
-    const redirectTimer = setTimeout(() => {
-      navigate("/login", { replace: true });
-    }, 5000);
+    // Call backend API to verify token
+    axios
+      .get(`https://turf-booking-pp67.onrender.com/api/users/verify?token=${token}`)
+      .then((response) => {
+        if (response.data?.message) {
+          setStatus("success");
+        } else {
+          setStatus("error");
+          setErrorMessage("Unexpected response from server.");
+        }
+      })
+      .catch((error) => {
+        setStatus("error");
+        if (error.response?.data?.error) {
+          setErrorMessage(error.response.data.error);
+        } else {
+          setErrorMessage("Verification failed. Please try again.");
+        }
+      });
+  }, [token]);
 
-    // Cleanup timers on unmount
-    return () => {
-      clearInterval(countdown);
-      clearTimeout(redirectTimer);
-    };
-  }, [navigate]);
+  useEffect(() => {
+    if (status === "success") {
+      const countdown = setInterval(() => {
+        setSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdown);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
+      const redirectTimer = setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 5000);
+
+      return () => {
+        clearInterval(countdown);
+        clearTimeout(redirectTimer);
+      };
+    }
+  }, [status, navigate]);
+
+  // Render UI based on verification status
+  if (status === "verifying") {
+    return (
+      <div style={styles.wrapper}>
+        <div style={styles.card}>
+          <h2 style={styles.title}>⏳ Verifying your email...</h2>
+          <p style={styles.message}>Please wait while we confirm your email verification.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div style={styles.wrapper}>
+        <div style={styles.card}>
+          <h2 style={styles.title}>❌ Verification Failed</h2>
+          <p style={styles.message}>{errorMessage}</p>
+          <button
+            style={styles.button}
+            onClick={() => navigate("/register", { replace: true })}
+          >
+            Go to Register
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // status === "success"
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
@@ -32,7 +101,10 @@ const EmailVerified = () => {
           Redirecting to login page in <strong>{secondsLeft}</strong> second
           {secondsLeft !== 1 ? "s" : ""}...
         </p>
-        <button style={styles.button} onClick={() => navigate("/login", { replace: true })}>
+        <button
+          style={styles.button}
+          onClick={() => navigate("/login", { replace: true })}
+        >
           Go to Login Now
         </button>
       </div>
