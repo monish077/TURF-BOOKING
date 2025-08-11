@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -29,7 +31,6 @@ public class UserController {
 
     /**
      * Register a new user.
-     * Sends verification email after successful registration.
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -46,22 +47,23 @@ public class UserController {
     }
 
     /**
-     * Verify email with token.
-     * Called by frontend during email verification.
+     * Verify email with token and redirect.
      */
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
+    public void verifyEmail(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
         boolean verified = userService.confirmEmail(token);
+
         if (verified) {
-            return ResponseEntity.ok(Map.of("message", "Email verified successfully."));
+            // Redirect to login page directly
+            response.sendRedirect("https://turf-booking-seven.vercel.app/login");
         } else {
-            return ResponseEntity.status(400).body(Map.of("error", "Invalid or expired token."));
+            // Redirect to error page with query parameter
+            response.sendRedirect("https://turf-booking-seven.vercel.app/email-verified?status=error");
         }
     }
 
     /**
-     * Login user with email and password.
-     * Returns JWT token and user info if successful.
+     * Login user.
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
@@ -81,7 +83,7 @@ public class UserController {
     }
 
     /**
-     * Forgot password: send reset password link to email.
+     * Forgot password.
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
@@ -96,7 +98,7 @@ public class UserController {
     }
 
     /**
-     * Reset password using token and new password.
+     * Reset password.
      */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
@@ -112,7 +114,7 @@ public class UserController {
     }
 
     /**
-     * Test sending an email.
+     * Test email.
      */
     @GetMapping("/test-mail")
     public ResponseEntity<?> sendTestMail() {
