@@ -73,15 +73,15 @@ public class TurfController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
-        return turfService.getTurfById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Turf not found with ID: " + id));
+        Optional<Turf> turf = turfService.getTurfById(id);
+        if (turf.isPresent()) {
+            return ResponseEntity.ok(turf.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Turf not found with ID: " + id);
+        }
     }
 
-    /**
-     * Add turf with multiple images (Cloudinary upload)
-     */
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
                                               @RequestParam("location") String location,
@@ -100,12 +100,10 @@ public class TurfController {
 
             List<String> imageUrls = new ArrayList<>();
 
-            // Upload main image
             if (mainImage != null && !mainImage.isEmpty()) {
                 imageUrls.add(uploadToCloudinary(mainImage));
             }
 
-            // Upload additional images
             if (otherImages != null) {
                 for (MultipartFile image : otherImages) {
                     if (image != null && !image.isEmpty()) {
@@ -132,9 +130,6 @@ public class TurfController {
         }
     }
 
-    /**
-     * Upload additional images to an existing turf
-     */
     @PostMapping("/{id}/images")
     public ResponseEntity<?> uploadTurfImages(@PathVariable Long id,
                                               @RequestParam("images") List<MultipartFile> images) {
@@ -195,9 +190,6 @@ public class TurfController {
         }
     }
 
-    /**
-     * Helper method for Cloudinary uploads
-     */
     private String uploadToCloudinary(MultipartFile file) throws Exception {
         try {
             Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
