@@ -9,8 +9,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private static final String[] ALLOWED_ORIGINS = {
-            "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app", // Production frontend
-            "http://localhost:3000" // Local development
+            "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",  // your known production frontend
+            "https://turf-booking-seven.vercel.app",                               // add your current deployed frontend here
+            "http://localhost:3000"                                                 // local dev
     };
 
     @Override
