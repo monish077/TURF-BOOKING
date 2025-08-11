@@ -94,7 +94,7 @@ const AdminDashboard = () => {
         const formData = new FormData();
         formData.append("name", newTurf.name);
         formData.append("location", newTurf.location);
-        formData.append("price", newTurf.pricePerHour);
+        formData.append("price", newTurf.pricePerHour); // Use key 'price' for backend
         formData.append("description", newTurf.description);
         formData.append("facilities", newTurf.facilities);
         formData.append("availableSlots", newTurf.availableSlots);
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
         await axiosInstance.post("/turfs/add-with-image", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
-            // Content-Type is set automatically for multipart/form-data
+            // Content-Type will be set automatically to multipart/form-data
           },
         });
 
@@ -119,8 +119,12 @@ const AdminDashboard = () => {
       resetForm();
       fetchTurfs();
     } catch (error) {
-      console.error("❌ Error saving turf:", error);
-      alert("Failed to save turf: " + error.message);
+      // Improved error logging
+      console.error("❌ Error saving turf:", error.response || error.message || error);
+      alert(
+        "Failed to save turf: " +
+          (error.response?.data || error.message || "Unknown error")
+      );
     } finally {
       setLoading(false);
     }
@@ -213,7 +217,13 @@ const AdminDashboard = () => {
           placeholder="Available Slots (comma separated)"
         />
 
-        <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleImageChange}
+          style={{ marginTop: "10px" }}
+        />
 
         {imagePreviews.length > 0 && (
           <div className="image-preview-container">
@@ -228,12 +238,17 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} style={{ marginTop: "15px" }}>
           {loading ? "Saving..." : editingTurfId ? "Update Turf" : "Add Turf"}
         </button>
 
         {editingTurfId && (
-          <button type="button" onClick={resetForm} className="cancel-btn">
+          <button
+            type="button"
+            onClick={resetForm}
+            className="cancel-btn"
+            style={{ marginLeft: "10px" }}
+          >
             Cancel Edit
           </button>
         )}
