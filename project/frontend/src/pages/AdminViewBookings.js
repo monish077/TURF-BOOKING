@@ -7,14 +7,16 @@ const AdminViewBookings = () => {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
 
+  // Get admin email from sessionStorage
   const adminEmail = sessionStorage.getItem("email");
 
+  // Fetch bookings for this admin
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getAdminBookings(adminEmail);
 
-      // Sort by date (soonest first)
+      // Sort bookings by date ascending
       const sortedBookings = [...res.data].sort(
         (a, b) => new Date(a.date) - new Date(b.date)
       );
@@ -26,6 +28,7 @@ const AdminViewBookings = () => {
     }
   }, [adminEmail]);
 
+  // Cancel a booking by ID
   const handleCancel = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
 
@@ -41,15 +44,17 @@ const AdminViewBookings = () => {
     }
   };
 
+  // Format date for display
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Fetch bookings on mount and set auto-refresh every 60s
   useEffect(() => {
     if (adminEmail) {
       fetchBookings();
-      const interval = setInterval(fetchBookings, 60000); // Auto-refresh every 60 sec
+      const interval = setInterval(fetchBookings, 60000); // Refresh every 60 sec
       return () => clearInterval(interval);
     } else {
       console.warn("⚠️ Admin email not found in sessionStorage.");
@@ -60,6 +65,7 @@ const AdminViewBookings = () => {
   return (
     <div className="view-bookings-page">
       <h2>📅 My Turf Bookings (Admin View)</h2>
+
       {loading ? (
         <div className="loading-spinner">Loading bookings...</div>
       ) : bookings.length > 0 ? (

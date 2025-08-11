@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  deleteTurf,
-  updateTurf,
-} from "../services/Api";
+import { deleteTurf, updateTurf } from "../services/Api";
 import axiosInstance from "../services/axiosInstance";
 import "../assets/styles/admin.css";
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
+  // State for list of turfs
   const [turfs, setTurfs] = useState([]);
+
+  // State for form input fields
   const [newTurf, setNewTurf] = useState({
     name: "",
     location: "",
@@ -17,42 +17,52 @@ const AdminDashboard = () => {
     facilities: "",
     availableSlots: "",
   });
+
+  // State to hold selected image files and their previews
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+
+  // ID of turf currently being edited; null means add new turf
   const [editingTurfId, setEditingTurfId] = useState(null);
+
+  // Loading indicator for form submission
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  // Fetch admin's turfs
+  // Fetch all turfs for the logged-in admin
   const fetchTurfs = useCallback(async () => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await axiosInstance.get("/turfs/admin", {
+      const response = await axiosInstance.get("/turfs/admin", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setTurfs(res.data || []);
-    } catch (err) {
-      console.error("Error fetching turfs:", err);
+      setTurfs(response.data || []);
+    } catch (error) {
+      console.error("Error fetching turfs:", error);
       alert("Failed to load turfs.");
     }
   }, []);
 
+  // On mount, load turfs
   useEffect(() => {
     fetchTurfs();
   }, [fetchTurfs]);
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewTurf((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle image file selection and preview generation
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     setImageFiles(files);
     setImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
+  // Reset form to initial state
   const resetForm = () => {
     setNewTurf({
       name: "",
@@ -67,17 +77,20 @@ const AdminDashboard = () => {
     setEditingTurfId(null);
   };
 
-  // Submit handler for add/update
+  // Form submission for adding or updating a turf
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const token = sessionStorage.getItem("token");
 
       if (editingTurfId) {
+        // Update existing turf (without image change)
         await updateTurf(editingTurfId, newTurf);
         alert("✅ Turf updated successfully!");
       } else {
+        // Add new turf with images
         const formData = new FormData();
         formData.append("name", newTurf.name);
         formData.append("location", newTurf.location);
@@ -87,19 +100,16 @@ const AdminDashboard = () => {
         formData.append("availableSlots", newTurf.availableSlots);
 
         if (imageFiles.length > 0) {
-          // First image as "image"
-          formData.append("image", imageFiles[0]);
-
-          // Rest images as "images"
+          formData.append("image", imageFiles[0]); // First image as main image
           for (let i = 1; i < imageFiles.length; i++) {
-            formData.append("images", imageFiles[i]);
+            formData.append("images", imageFiles[i]); // Additional images
           }
         }
 
         await axiosInstance.post("/turfs/add-with-image", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
-            // Let browser set Content-Type (multipart/form-data)
+            // Content-Type is set automatically for multipart/form-data
           },
         });
 
@@ -108,15 +118,15 @@ const AdminDashboard = () => {
 
       resetForm();
       fetchTurfs();
-    } catch (err) {
-      console.error("❌ Error saving turf:", err);
-      alert("Failed to save turf: " + err.message);
+    } catch (error) {
+      console.error("❌ Error saving turf:", error);
+      alert("Failed to save turf: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Populate form for editing a turf
+  // Populate the form with turf data for editing
   const handleEdit = (turf) => {
     setNewTurf({
       name: turf.name || "",
@@ -132,15 +142,16 @@ const AdminDashboard = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Delete turf by ID
+  // Delete a turf by ID with confirmation
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this turf?")) return;
+
     try {
       await deleteTurf(id);
       alert("🗑 Turf deleted successfully!");
       fetchTurfs();
-    } catch (err) {
-      console.error("❌ Error deleting turf:", err);
+    } catch (error) {
+      console.error("❌ Error deleting turf:", error);
       alert("Failed to delete turf.");
     }
   };
@@ -220,6 +231,7 @@ const AdminDashboard = () => {
         <button type="submit" disabled={loading}>
           {loading ? "Saving..." : editingTurfId ? "Update Turf" : "Add Turf"}
         </button>
+
         {editingTurfId && (
           <button type="button" onClick={resetForm} className="cancel-btn">
             Cancel Edit
