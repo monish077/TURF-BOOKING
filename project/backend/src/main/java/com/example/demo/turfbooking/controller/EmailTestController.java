@@ -7,7 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/test")
-@CrossOrigin(origins = "*") // Allow calls from frontend during testing
+@CrossOrigin(origins = {
+    "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",
+    "http://localhost:3000"
+}, allowCredentials = "true")
+
 public class EmailTestController {
 
     @Autowired

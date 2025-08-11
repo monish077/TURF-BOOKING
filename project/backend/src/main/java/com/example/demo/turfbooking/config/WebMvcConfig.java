@@ -8,17 +8,27 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    private static final String[] ALLOWED_ORIGINS = {
+            "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app", // Production frontend
+            "http://localhost:3000" // Local development
+    };
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Serve uploaded files from /uploads/** mapping
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations("file:uploads/")
+                .setCachePeriod(3600); // 1 hour cache for better performance
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**") // Adjust this if your API base path is different
-                .allowedOrigins("https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app") // your frontend URL
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowCredentials(true);
+        registry.addMapping("/**") // Apply CORS rules to all endpoints
+                .allowedOrigins(ALLOWED_ORIGINS)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+                .allowedHeaders("*")
+                .exposedHeaders("Authorization")
+                .allowCredentials(true)
+                .maxAge(3600); // Cache preflight response for 1 hour
     }
 }

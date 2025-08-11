@@ -4,20 +4,25 @@ import com.example.demo.turfbooking.entity.User;
 import com.example.demo.turfbooking.jwt.JwtUtil;
 import com.example.demo.turfbooking.service.EmailService;
 import com.example.demo.turfbooking.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = {
-        "https://turf-booking-frontend.vercel.app",
-        "http://localhost:3000"
-})
+@CrossOrigin(
+        origins = {
+                "https://turf-booking-frontend.vercel.app",
+                "https://turf-booking-seven.vercel.app",
+                "http://localhost:3000"
+        },
+        allowCredentials = "true"
+)
 public class UserController {
 
     @Autowired
@@ -30,7 +35,7 @@ public class UserController {
     private JwtUtil jwtUtil;
 
     /**
-     * Register a new user.
+     * ✅ Register a new user
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -47,23 +52,38 @@ public class UserController {
     }
 
     /**
-     * Verify email with token and redirect.
+     * ✅ Verify email token — supports both browser clicks and API calls
      */
     @GetMapping("/verify")
-    public void verifyEmail(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
+    public void verifyEmail(
+            @RequestParam("token") String token,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+
         boolean verified = userService.confirmEmail(token);
 
-        if (verified) {
-            // Redirect to login page directly
-            response.sendRedirect("https://turf-booking-seven.vercel.app/login");
+        // If called directly from browser (not via fetch)
+        String acceptHeader = request.getHeader("Accept");
+        boolean isApiRequest = acceptHeader != null && acceptHeader.contains("application/json");
+
+        if (isApiRequest) {
+            // API call: return JSON
+            response.setContentType("application/json");
+            response.getWriter().write(
+                    "{\"status\":\"" + (verified ? "success" : "error") + "\"}"
+            );
         } else {
-            // Redirect to error page with query parameter
-            response.sendRedirect("https://turf-booking-seven.vercel.app/email-verified?status=error");
+            // Email link click: redirect to frontend page
+            if (verified) {
+                response.sendRedirect("https://turf-booking-seven.vercel.app/login");
+            } else {
+                response.sendRedirect("https://turf-booking-seven.vercel.app/email-verified?status=error");
+            }
         }
     }
 
     /**
-     * Login user.
+     * ✅ Login user
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
@@ -83,7 +103,7 @@ public class UserController {
     }
 
     /**
-     * Forgot password.
+     * ✅ Forgot password
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
@@ -98,7 +118,7 @@ public class UserController {
     }
 
     /**
-     * Reset password.
+     * ✅ Reset password
      */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
@@ -114,7 +134,7 @@ public class UserController {
     }
 
     /**
-     * Test email.
+     * ✅ Send test email
      */
     @GetMapping("/test-mail")
     public ResponseEntity<?> sendTestMail() {
