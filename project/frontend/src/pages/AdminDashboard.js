@@ -3,9 +3,8 @@ import {
   getAllTurfs,
   deleteTurf,
   updateTurf,
-  uploadImages,
 } from "../services/Api";
-import axiosInstance from "../services/axiosInstance"; // ✅ shared axios config
+import axiosInstance from "../services/axiosInstance";
 import "../assets/styles/admin.css";
 import { useNavigate } from "react-router-dom";
 
@@ -26,10 +25,13 @@ const AdminDashboard = () => {
 
   const navigate = useNavigate();
 
-  // ✅ Fetch turfs for logged-in admin
+  // ✅ Fetch admin's turfs
   const fetchTurfs = useCallback(async () => {
     try {
-      const res = await getAllTurfs();
+      const token = sessionStorage.getItem("token");
+      const res = await axiosInstance.get("/turfs/admin", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTurfs(res.data || []);
     } catch (err) {
       console.error("❌ Error fetching turfs:", err);
@@ -73,11 +75,9 @@ const AdminDashboard = () => {
       const token = sessionStorage.getItem("token");
 
       if (editingTurfId) {
-        // ✅ Update existing turf
         await updateTurf(editingTurfId, newTurf);
         alert("✅ Turf updated successfully!");
       } else {
-        // ✅ Add new turf
         const formData = new FormData();
         formData.append("name", newTurf.name);
         formData.append("location", newTurf.location);
@@ -86,24 +86,17 @@ const AdminDashboard = () => {
         formData.append("facilities", newTurf.facilities);
         formData.append("availableSlots", newTurf.availableSlots);
 
-        if (imageFiles.length > 0) {
-          formData.append("image", imageFiles[0]); // main image
-        }
-
-        const response = await axiosInstance.post("/turfs/add-with-image", formData, {
-          headers: { Authorization: `Bearer ${token}` },
+        // ✅ Append all images with correct backend key
+        imageFiles.forEach((file) => {
+          formData.append("images", file);
         });
 
-        const createdTurfId = response?.data?.id;
-
-        // Upload remaining images
-        if (imageFiles.length > 1 && createdTurfId) {
-          const moreImagesForm = new FormData();
-          imageFiles.slice(1).forEach((file) =>
-            moreImagesForm.append("images", file)
-          );
-          await uploadImages(createdTurfId, moreImagesForm);
-        }
+        await axiosInstance.post("/turfs/add-with-image", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
 
         alert("✅ Turf added successfully with images!");
       }

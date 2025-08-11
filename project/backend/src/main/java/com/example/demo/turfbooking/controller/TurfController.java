@@ -23,8 +23,9 @@ import java.util.Optional;
 @RequestMapping("/api/turfs")
 @CrossOrigin(origins = {
         "https://turf-booking-frontend.vercel.app",
-        "https://turf-booking-an7sfm399-monishs-projects-29844c66.vercel.app"
-})
+        "https://turf-booking-an7sfm399-monishs-projects-29844c66.vercel.app",
+        "http://localhost:3000"
+}, allowCredentials = "true")
 public class TurfController {
 
     private final TurfService turfService;
@@ -75,7 +76,7 @@ public class TurfController {
     }
 
     /**
-     * ✅ Add turf with multiple images
+     * ✅ Add turf with multiple images (handles main + additional images in one request)
      */
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
@@ -84,7 +85,8 @@ public class TurfController {
                                               @RequestParam(value = "description", required = false) String description,
                                               @RequestParam(value = "facilities", required = false) String facilities,
                                               @RequestParam(value = "availableSlots", required = false) String availableSlots,
-                                              @RequestParam("images") List<MultipartFile> images,
+                                              @RequestParam("image") MultipartFile mainImage,
+                                              @RequestParam(value = "images", required = false) List<MultipartFile> otherImages,
                                               @RequestHeader("Authorization") String authHeader) {
         try {
             String jwt = authHeader.replace("Bearer ", "");
@@ -93,10 +95,23 @@ public class TurfController {
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
 
             List<String> imageUrls = new ArrayList<>();
-            for (MultipartFile image : images) {
+
+            // Upload main image first
+            if (mainImage != null && !mainImage.isEmpty()) {
                 Map<String, Object> uploadResult = cloudinary.uploader()
-                        .upload(image.getBytes(), ObjectUtils.emptyMap());
+                        .upload(mainImage.getBytes(), ObjectUtils.emptyMap());
                 imageUrls.add((String) uploadResult.get("secure_url"));
+            }
+
+            // Upload other images if provided
+            if (otherImages != null) {
+                for (MultipartFile image : otherImages) {
+                    if (image != null && !image.isEmpty()) {
+                        Map<String, Object> uploadResult = cloudinary.uploader()
+                                .upload(image.getBytes(), ObjectUtils.emptyMap());
+                        imageUrls.add((String) uploadResult.get("secure_url"));
+                    }
+                }
             }
 
             Turf turf = new Turf();
@@ -125,9 +140,11 @@ public class TurfController {
         try {
             List<String> urls = new ArrayList<>();
             for (MultipartFile image : images) {
-                Map<String, Object> uploadResult = cloudinary.uploader()
-                        .upload(image.getBytes(), ObjectUtils.emptyMap());
-                urls.add((String) uploadResult.get("secure_url"));
+                if (image != null && !image.isEmpty()) {
+                    Map<String, Object> uploadResult = cloudinary.uploader()
+                            .upload(image.getBytes(), ObjectUtils.emptyMap());
+                    urls.add((String) uploadResult.get("secure_url"));
+                }
             }
             return ResponseEntity.ok(turfService.addImagesToTurf(id, urls));
         } catch (Exception e) {
