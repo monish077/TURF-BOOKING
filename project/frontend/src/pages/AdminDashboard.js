@@ -68,7 +68,7 @@ const AdminDashboard = () => {
     setEditingTurfId(null);
   };
 
-  // UPDATED handleSubmit
+  // Submit handler for add/update
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
         await axiosInstance.post("/turfs/add-with-image", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
-            // No Content-Type header here
+            // Let browser set Content-Type (multipart/form-data)
           },
         });
 
@@ -117,7 +117,34 @@ const AdminDashboard = () => {
     }
   };
 
-  // rest of your component (handleDelete, handleEdit, JSX) unchanged
+  // Add handleEdit to populate form for editing
+  const handleEdit = (turf) => {
+    setNewTurf({
+      name: turf.name || "",
+      location: turf.location || "",
+      pricePerHour: turf.pricePerHour || "",
+      description: turf.description || "",
+      facilities: turf.facilities || "",
+      availableSlots: turf.availableSlots || "",
+    });
+    setEditingTurfId(turf.id);
+    setImagePreviews(turf.imageUrls || []);
+    setImageFiles([]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Delete turf by id
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this turf?")) return;
+    try {
+      await deleteTurf(id);
+      alert("🗑 Turf deleted successfully!");
+      fetchTurfs();
+    } catch (err) {
+      console.error("❌ Error deleting turf:", err);
+      alert("Failed to delete turf.");
+    }
+  };
 
   return (
     <div className="admin-dashboard">
