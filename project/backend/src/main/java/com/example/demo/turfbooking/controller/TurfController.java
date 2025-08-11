@@ -8,6 +8,8 @@ import com.example.demo.turfbooking.repository.UserRepository;
 import com.example.demo.turfbooking.service.TurfService;
 import com.example.demo.turfbooking.jwt.JwtUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -28,18 +30,19 @@ import java.util.Optional;
 }, allowCredentials = "true")
 public class TurfController {
 
+    private static final Logger logger = LoggerFactory.getLogger(TurfController.class);
+
     private final TurfService turfService;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final Cloudinary cloudinary;
 
     @Autowired
-    private Cloudinary cloudinary;
-
-    @Autowired
-    public TurfController(TurfService turfService, UserRepository userRepository, JwtUtil jwtUtil) {
+    public TurfController(TurfService turfService, UserRepository userRepository, JwtUtil jwtUtil, Cloudinary cloudinary) {
         this.turfService = turfService;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
+        this.cloudinary = cloudinary;
     }
 
     @GetMapping
@@ -62,6 +65,7 @@ public class TurfController {
 
             return ResponseEntity.ok(turfService.getTurfsByAdmin(admin));
         } catch (Exception e) {
+            logger.error("Error retrieving admin turfs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving admin turfs: " + e.getMessage());
         }
@@ -69,14 +73,14 @@ public class TurfController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
-        Optional<Turf> turf = turfService.getTurfById(id);
-        return turf.<ResponseEntity<?>>map(ResponseEntity::ok)
+        return turfService.getTurfById(id)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Turf not found with ID: " + id));
     }
 
     /**
-     * ✅ Add turf with multiple images (handles main + additional images in one request)
+     * Add turf with multiple images (Cloudinary upload)
      */
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
@@ -96,20 +100,16 @@ public class TurfController {
 
             List<String> imageUrls = new ArrayList<>();
 
-            // Upload main image first
+            // Upload main image
             if (mainImage != null && !mainImage.isEmpty()) {
-                Map<String, Object> uploadResult = cloudinary.uploader()
-                        .upload(mainImage.getBytes(), ObjectUtils.emptyMap());
-                imageUrls.add((String) uploadResult.get("secure_url"));
+                imageUrls.add(uploadToCloudinary(mainImage));
             }
 
-            // Upload other images if provided
+            // Upload additional images
             if (otherImages != null) {
                 for (MultipartFile image : otherImages) {
                     if (image != null && !image.isEmpty()) {
-                        Map<String, Object> uploadResult = cloudinary.uploader()
-                                .upload(image.getBytes(), ObjectUtils.emptyMap());
-                        imageUrls.add((String) uploadResult.get("secure_url"));
+                        imageUrls.add(uploadToCloudinary(image));
                     }
                 }
             }
@@ -126,13 +126,14 @@ public class TurfController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(turfService.addTurf(turf));
         } catch (Exception e) {
+            logger.error("Error adding turf with images", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error adding turf with images: " + e.getMessage());
         }
     }
 
     /**
-     * ✅ Upload additional images to an existing turf
+     * Upload additional images to an existing turf
      */
     @PostMapping("/{id}/images")
     public ResponseEntity<?> uploadTurfImages(@PathVariable Long id,
@@ -141,13 +142,12 @@ public class TurfController {
             List<String> urls = new ArrayList<>();
             for (MultipartFile image : images) {
                 if (image != null && !image.isEmpty()) {
-                    Map<String, Object> uploadResult = cloudinary.uploader()
-                            .upload(image.getBytes(), ObjectUtils.emptyMap());
-                    urls.add((String) uploadResult.get("secure_url"));
+                    urls.add(uploadToCloudinary(image));
                 }
             }
             return ResponseEntity.ok(turfService.addImagesToTurf(id, urls));
         } catch (Exception e) {
+            logger.error("Image upload failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Image upload failed: " + e.getMessage());
         }
@@ -163,6 +163,7 @@ public class TurfController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found with ID: " + id);
             }
         } catch (Exception e) {
+            logger.error("Error updating turf", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error updating turf: " + e.getMessage());
         }
@@ -177,6 +178,7 @@ public class TurfController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found.");
             }
         } catch (Exception e) {
+            logger.error("Error deleting turf", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error deleting turf: " + e.getMessage());
         }
@@ -187,8 +189,22 @@ public class TurfController {
         try {
             return ResponseEntity.ok(turfService.getAllTurfs());
         } catch (Exception e) {
+            logger.error("Error testing DB connection", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error testing DB: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Helper method for Cloudinary uploads
+     */
+    private String uploadToCloudinary(MultipartFile file) throws Exception {
+        try {
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            return (String) uploadResult.get("secure_url");
+        } catch (Exception e) {
+            logger.error("Cloudinary upload failed for file: {}", file.getOriginalFilename(), e);
+            throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
         }
     }
 }
