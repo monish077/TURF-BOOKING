@@ -45,16 +45,19 @@ public class TurfController {
         this.cloudinary = cloudinary;
     }
 
+    // Get all turfs
     @GetMapping
     public List<Turf> getAllTurfs() {
         return turfService.getAllTurfs();
     }
 
+    // Public endpoint to get all turfs
     @GetMapping("/public")
     public ResponseEntity<List<Turf>> getAllPublicTurfs() {
         return ResponseEntity.ok(turfService.getAllTurfs());
     }
 
+    // Get turfs created by logged-in admin
     @GetMapping("/admin")
     public ResponseEntity<?> getTurfsByAdmin(@RequestHeader("Authorization") String authHeader) {
         try {
@@ -71,6 +74,7 @@ public class TurfController {
         }
     }
 
+    // Get turf by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         Optional<Turf> turf = turfService.getTurfById(id);
@@ -82,6 +86,7 @@ public class TurfController {
         }
     }
 
+    // Add turf with main + additional images (Cloudinary upload)
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
                                               @RequestParam("location") String location,
@@ -122,7 +127,8 @@ public class TurfController {
             turf.setImageUrls(imageUrls);
             turf.setAdmin(admin);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(turfService.addTurf(turf));
+            Turf savedTurf = turfService.addTurf(turf);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedTurf);
         } catch (Exception e) {
             logger.error("Error adding turf with images", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -130,6 +136,7 @@ public class TurfController {
         }
     }
 
+    // Upload additional images to existing turf
     @PostMapping("/{id}/images")
     public ResponseEntity<?> uploadTurfImages(@PathVariable Long id,
                                               @RequestParam("images") List<MultipartFile> images) {
@@ -140,7 +147,8 @@ public class TurfController {
                     urls.add(uploadToCloudinary(image));
                 }
             }
-            return ResponseEntity.ok(turfService.addImagesToTurf(id, urls));
+            Turf updatedTurf = turfService.addImagesToTurf(id, urls);
+            return ResponseEntity.ok(updatedTurf);
         } catch (Exception e) {
             logger.error("Image upload failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -148,6 +156,7 @@ public class TurfController {
         }
     }
 
+    // Update turf details
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTurf(@PathVariable Long id, @RequestBody Turf turf) {
         try {
@@ -164,6 +173,7 @@ public class TurfController {
         }
     }
 
+    // Delete turf
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTurf(@PathVariable Long id) {
         try {
@@ -179,6 +189,7 @@ public class TurfController {
         }
     }
 
+    // Test DB connection and return all turfs
     @GetMapping("/test-db")
     public ResponseEntity<?> testDb() {
         try {
@@ -190,6 +201,7 @@ public class TurfController {
         }
     }
 
+    // Helper method: upload file to Cloudinary and return secure URL
     private String uploadToCloudinary(MultipartFile file) throws Exception {
         try {
             Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
