@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  getAllTurfs,
   deleteTurf,
   updateTurf,
 } from "../services/Api";
@@ -117,7 +116,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Add handleEdit to populate form for editing
+  // Populate form for editing a turf
   const handleEdit = (turf) => {
     setNewTurf({
       name: turf.name || "",
@@ -133,7 +132,7 @@ const AdminDashboard = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Delete turf by id
+  // Delete turf by ID
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this turf?")) return;
     try {
