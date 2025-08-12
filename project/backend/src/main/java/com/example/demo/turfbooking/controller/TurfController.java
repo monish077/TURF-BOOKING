@@ -16,7 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.jsonwebtoken.JwtException;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,29 +66,37 @@ public class TurfController {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 logger.warn("Missing or invalid Authorization header");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Missing or invalid token");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Unauthorized: Missing or invalid token");
             }
 
             String jwt = authHeader.substring(7); // remove "Bearer "
-            String email = jwtUtil.extractUsername(jwt);
+            String email;
+            try {
+                email = jwtUtil.extractUsername(jwt);
+            } catch (JwtException e) {
+                logger.warn("Invalid or expired JWT: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Unauthorized: Invalid or expired token");
+            } catch (RuntimeException e) {
+                logger.warn("Token processing error: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Unauthorized: Token processing error");
+            }
 
             if (email == null || email.isBlank()) {
                 logger.error("JWT token did not contain a valid email");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Invalid token payload");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Unauthorized: Invalid token payload");
             }
 
             Optional<User> adminOpt = userRepository.findByEmail(email);
             if (adminOpt.isEmpty()) {
                 logger.warn("No admin found with email: {}", email);
-                // Return empty list to frontend if you prefer not to expose 404 here:
-                return ResponseEntity.ok(new ArrayList<Turf>());
-                // Or uncomment the following to return 404:
-                // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+                return ResponseEntity.ok(Collections.emptyList());
             }
 
             User admin = adminOpt.get();
-
-            // Keep service call same as your code (it previously accepted User)
             List<Turf> turfs = turfService.getTurfsByAdmin(admin);
             if (turfs == null) {
                 turfs = new ArrayList<>();
@@ -93,24 +104,22 @@ public class TurfController {
 
             logger.info("Found {} turfs for admin {}", turfs.size(), email);
             return ResponseEntity.ok(turfs);
+
         } catch (Exception e) {
-            logger.error("Error retrieving admin turfs", e);
+            logger.error("Unexpected error retrieving admin turfs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving admin turfs: " + e.getMessage());
         }
     }
 
-    // Get turf by ID — explicit handling to avoid generics inference issues
+    // Get turf by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         try {
             Optional<Turf> turfOpt = turfService.getTurfById(id);
-            if (turfOpt.isPresent()) {
-                return ResponseEntity.ok(turfOpt.get());
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Turf not found with ID: " + id);
-            }
+            return turfOpt.<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body("Turf not found with ID: " + id));
         } catch (Exception e) {
             logger.error("Error fetching turf by id {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -131,7 +140,8 @@ public class TurfController {
                                               @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Missing or invalid token");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Unauthorized: Missing or invalid token");
             }
 
             String jwt = authHeader.substring(7);
@@ -140,11 +150,9 @@ public class TurfController {
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
 
             List<String> imageUrls = new ArrayList<>();
-
             if (mainImage != null && !mainImage.isEmpty()) {
                 imageUrls.add(uploadToCloudinary(mainImage));
             }
-
             if (otherImages != null && !otherImages.isEmpty()) {
                 for (MultipartFile image : otherImages) {
                     if (image != null && !image.isEmpty()) {
