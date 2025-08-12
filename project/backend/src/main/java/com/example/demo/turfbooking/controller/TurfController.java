@@ -59,14 +59,23 @@ public class TurfController {
 
     // Get turfs created by logged-in admin
     @GetMapping("/admin")
-    public ResponseEntity<?> getTurfsByAdmin(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getTurfsByAdmin(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                logger.warn("Missing or invalid Authorization header");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Missing or invalid token");
+            }
+
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
-            User admin = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-            return ResponseEntity.ok(turfService.getTurfsByAdmin(admin));
+            Optional<User> adminOpt = userRepository.findByEmail(email);
+            if (adminOpt.isEmpty()) {
+                logger.warn("Admin not found for email: {}", email);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+            }
+
+            return ResponseEntity.ok(turfService.getTurfsByAdmin(adminOpt.get()));
         } catch (Exception e) {
             logger.error("Error retrieving admin turfs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -78,15 +87,12 @@ public class TurfController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         Optional<Turf> turf = turfService.getTurfById(id);
-        if (turf.isPresent()) {
-            return ResponseEntity.ok(turf.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Turf not found with ID: " + id);
-        }
+        return turf.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Turf not found with ID: " + id));
     }
 
-    // Add turf with main + additional images (Cloudinary upload)
+    // Add turf with main + additional images
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
                                               @RequestParam("location") String location,
@@ -96,8 +102,12 @@ public class TurfController {
                                               @RequestParam(value = "availableSlots", required = false) String availableSlots,
                                               @RequestParam("image") MultipartFile mainImage,
                                               @RequestParam(value = "images", required = false) List<MultipartFile> otherImages,
-                                              @RequestHeader("Authorization") String authHeader) {
+                                              @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Missing or invalid token");
+            }
+
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
             User admin = userRepository.findByEmail(email)
@@ -189,7 +199,7 @@ public class TurfController {
         }
     }
 
-    // Test DB connection and return all turfs
+    // Test DB connection
     @GetMapping("/test-db")
     public ResponseEntity<?> testDb() {
         try {
@@ -201,7 +211,7 @@ public class TurfController {
         }
     }
 
-    // Helper method: upload file to Cloudinary and return secure URL
+    // Cloudinary upload helper
     private String uploadToCloudinary(MultipartFile file) throws Exception {
         try {
             Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
