@@ -85,13 +85,16 @@ public class TurfController {
         }
     }
 
-    // Get turf by ID
+    // Get turf by ID (fixed generics issue)
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
-        Optional<Turf> turf = turfService.getTurfById(id);
-        return turf.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Turf not found with ID: " + id));
+        Optional<Turf> turfOpt = turfService.getTurfById(id);
+        if (turfOpt.isPresent()) {
+            return ResponseEntity.ok(turfOpt.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Turf not found with ID: " + id);
+        }
     }
 
     // Add turf with main + additional images
