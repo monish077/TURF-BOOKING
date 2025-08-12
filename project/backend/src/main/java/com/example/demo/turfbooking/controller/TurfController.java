@@ -69,13 +69,15 @@ public class TurfController {
             String jwt = authHeader.replace("Bearer ", "");
             String email = jwtUtil.extractUsername(jwt);
 
-            Optional<User> adminOpt = userRepository.findByEmail(email);
-            if (adminOpt.isEmpty()) {
-                logger.warn("Admin not found for email: {}", email);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+            User admin = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+            List<Turf> turfs = turfService.getTurfsByAdmin(admin);
+            if (turfs == null) {
+                turfs = new ArrayList<>();
             }
 
-            return ResponseEntity.ok(turfService.getTurfsByAdmin(adminOpt.get()));
+            return ResponseEntity.ok(turfs);
         } catch (Exception e) {
             logger.error("Error retrieving admin turfs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
