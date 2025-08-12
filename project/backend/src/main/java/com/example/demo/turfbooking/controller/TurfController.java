@@ -66,17 +66,32 @@ public class TurfController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Missing or invalid token");
             }
 
-            String jwt = authHeader.replace("Bearer ", "");
+            String jwt = authHeader.substring(7); // remove "Bearer "
             String email = jwtUtil.extractUsername(jwt);
 
-            User admin = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Admin not found"));
+            if (email == null || email.isBlank()) {
+                logger.error("JWT token did not contain a valid email");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Invalid token payload");
+            }
 
+            Optional<User> adminOpt = userRepository.findByEmail(email);
+            if (adminOpt.isEmpty()) {
+                logger.warn("No admin found with email: {}", email);
+                // Return empty list to frontend if you prefer not to expose 404 here:
+                return ResponseEntity.ok(new ArrayList<Turf>());
+                // Or uncomment the following to return 404:
+                // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+            }
+
+            User admin = adminOpt.get();
+
+            // Keep service call same as your code (it previously accepted User)
             List<Turf> turfs = turfService.getTurfsByAdmin(admin);
             if (turfs == null) {
                 turfs = new ArrayList<>();
             }
 
+            logger.info("Found {} turfs for admin {}", turfs.size(), email);
             return ResponseEntity.ok(turfs);
         } catch (Exception e) {
             logger.error("Error retrieving admin turfs", e);
@@ -85,15 +100,21 @@ public class TurfController {
         }
     }
 
-    // Get turf by ID (fixed generics issue)
+    // Get turf by ID — explicit handling to avoid generics inference issues
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
-        Optional<Turf> turfOpt = turfService.getTurfById(id);
-        if (turfOpt.isPresent()) {
-            return ResponseEntity.ok(turfOpt.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Turf not found with ID: " + id);
+        try {
+            Optional<Turf> turfOpt = turfService.getTurfById(id);
+            if (turfOpt.isPresent()) {
+                return ResponseEntity.ok(turfOpt.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Turf not found with ID: " + id);
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching turf by id {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching turf: " + e.getMessage());
         }
     }
 
@@ -113,7 +134,7 @@ public class TurfController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Missing or invalid token");
             }
 
-            String jwt = authHeader.replace("Bearer ", "");
+            String jwt = authHeader.substring(7);
             String email = jwtUtil.extractUsername(jwt);
             User admin = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Admin not found"));
@@ -124,7 +145,7 @@ public class TurfController {
                 imageUrls.add(uploadToCloudinary(mainImage));
             }
 
-            if (otherImages != null) {
+            if (otherImages != null && !otherImages.isEmpty()) {
                 for (MultipartFile image : otherImages) {
                     if (image != null && !image.isEmpty()) {
                         imageUrls.add(uploadToCloudinary(image));
@@ -157,9 +178,11 @@ public class TurfController {
                                               @RequestParam("images") List<MultipartFile> images) {
         try {
             List<String> urls = new ArrayList<>();
-            for (MultipartFile image : images) {
-                if (image != null && !image.isEmpty()) {
-                    urls.add(uploadToCloudinary(image));
+            if (images != null && !images.isEmpty()) {
+                for (MultipartFile image : images) {
+                    if (image != null && !image.isEmpty()) {
+                        urls.add(uploadToCloudinary(image));
+                    }
                 }
             }
             Turf updatedTurf = turfService.addImagesToTurf(id, urls);
@@ -218,12 +241,7 @@ public class TurfController {
 
     // Cloudinary upload helper
     private String uploadToCloudinary(MultipartFile file) throws Exception {
-        try {
-            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
-            return (String) uploadResult.get("secure_url");
-        } catch (Exception e) {
-            logger.error("Cloudinary upload failed for file: {}", file.getOriginalFilename(), e);
-            throw new RuntimeException("Cloudinary upload failed: " + e.getMessage());
-        }
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        return (String) uploadResult.get("secure_url");
     }
 }
