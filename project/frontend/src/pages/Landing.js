@@ -20,11 +20,6 @@ const Landing = () => {
       {/* Navbar */}
       <nav className="navbar">
         <div className="logo">MARS ARENA</div>
-        <div className="nav-links">
-          <Link to="/login" className="book-btn">
-            Book Now
-          </Link>
-        </div>
       </nav>
 
       {/* Hero Section */}
