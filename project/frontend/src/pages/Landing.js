@@ -45,10 +45,10 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer
       <footer className="footer">
         © {new Date().getFullYear()} MARS ARENA | All rights reserved.
-      </footer>
+      </footer> */}
     </div>
   );
 };
