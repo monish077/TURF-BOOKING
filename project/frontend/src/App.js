@@ -1,11 +1,14 @@
 import React from "react";
 import AppRouter from "./router/AppRouter";
-import "./App.css"; // ✅ Import global styles
+import "./App.css";
 
 function App() {
   return (
-    <div className="app-container">
+    <div className="page-container">
       <AppRouter />
+      <footer className="footer-bar">
+        © {new Date().getFullYear()} Mars Arena | All Rights Reserved
+      </footer>
     </div>
   );
 }
