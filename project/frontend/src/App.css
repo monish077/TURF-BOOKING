@@ -1,36 +1,94 @@
-/* App.css */
-
-/* Reset default margin/padding */
+/* ✅ Global Reset & Defaults */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Set a nice background for the whole app */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
-  color: #333;
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
-/* App container */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* ✅ App Container */
 .app-container {
   max-width: 1200px;
   margin: auto;
-  padding: 20px;
+  padding: 1rem;
 }
 
-/* Example button styling */
-button {
-  background-color: #4cafef;
-  color: white;
+/* ✅ Reusable Card */
+.card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* ✅ Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
   border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: 5px;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-button:hover {
-  background-color: #379dd8;
+.btn:hover {
+  background-color: #2563eb;
+}
+
+/* ✅ Forms */
+input, select, textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ✅ Responsive Layouts */
+@media (max-width: 1024px) {
+  .app-container {
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+  .card {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  .app-container {
+    padding: 0.5rem;
+  }
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
 }
