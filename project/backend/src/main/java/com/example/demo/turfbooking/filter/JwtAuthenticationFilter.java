@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -24,47 +25,82 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
+    // ✅ Endpoints that do not require JWT authentication
+    private static final List<String> EXCLUDED_PATHS = List.of(
+            "/api/users/login",
+            "/api/users/register",
+            "/api/users/verify",
+            "/api/users/email-verified",
+            "/api/users/forgot-password",
+            "/api/users/reset-password",
+            "/api/users/test-mail",
+            "/api/turfs/public",
+            "/api/auth/refresh" // <-- allow refresh without login
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        String email = null;
-        String jwt = null;
+        try {
+            String requestPath = request.getRequestURI();
 
-        // Extract JWT token from Authorization header
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7);
-            try {
-                email = jwtUtil.extractEmail(jwt);
-            } catch (Exception e) {
-                logger.error("JWT parsing error: " + e.getMessage());
+            // ✅ Skip JWT check for OPTIONS (CORS preflight) requests
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            // ✅ Skip JWT check for public endpoints
+            if (EXCLUDED_PATHS.stream().anyMatch(requestPath::startsWith)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            final String authHeader = request.getHeader("Authorization");
+            String email = null;
+            String jwt = null;
+
+            // ✅ Extract JWT token from Authorization header
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                jwt = authHeader.substring(7);
+                try {
+                    email = jwtUtil.extractEmail(jwt);
+                } catch (Exception e) {
+                    logger.warn("JWT parsing error: " + e.getMessage(), e);
+                }
+            }
+
+            // ✅ If email is extracted and no authentication is set
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                try {
+                    UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+
+                    // ✅ Validate token against user details
+                    if (jwtUtil.validateToken(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities());
+
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        logger.warn("Invalid JWT token for user: " + email);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error loading user details for email: " + email, e);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("JWT filter error: " + e.getMessage(), e);
+            // Don't block request, just proceed without authentication
         }
 
-        // If email is extracted and authentication is not already set in context
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // Load user details from DB or cache
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
-
-            // Validate token against user details
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                // Create auth token and set in security context
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities());
-
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            } else {
-                logger.warn("Invalid JWT token for user: " + email);
-            }
-        }
-
-        // Continue filter chain regardless
+        // ✅ Continue filter chain regardless
         filterChain.doFilter(request, response);
     }
 }

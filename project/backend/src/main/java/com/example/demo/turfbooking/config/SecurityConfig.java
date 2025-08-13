@@ -31,18 +31,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // ✅ Enable CORS with config from CorsConfig
+            // ✅ Enable CORS using our custom configuration
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-            // ❌ Disable CSRF because we use JWT, not cookies for sessions
+            // ❌ Disable CSRF because we use JWT (stateless)
             .csrf(csrf -> csrf.disable())
 
             // ✅ Authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Allow CORS preflight requests
+                // Allow preflight requests without auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Public endpoints
+                // Public authentication & utility endpoints
                 .requestMatchers(
                     "/api/users/register",
                     "/api/users/login",
@@ -52,36 +52,38 @@ public class SecurityConfig {
                     "/api/users/reset-password",
                     "/api/users/test-mail",
                     "/test/**",
-                    "/api/turfs/public",
-                    "/api/turfs/*", // single path param
                     "/manifest.json",
                     "/favicon.ico",
                     "/static/**"
                 ).permitAll()
 
-                // Public GET for uploaded files
-                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                // Public turf listing endpoints (only specific)
+                .requestMatchers(HttpMethod.GET, "/api/turfs/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/turfs/{id}").permitAll()
 
-                // Admin role endpoints
+                // Protect admin-specific turf listing
+                .requestMatchers("/api/turfs/admin").hasAuthority("ROLE_ADMIN")
+
+                // Admin-only endpoints
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-                // User role endpoints
+                // User-only endpoints
                 .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
 
-                // Bookings require either role
+                // Bookings accessible to both
                 .requestMatchers("/api/bookings/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 
-                // Other Turf APIs require authentication
+                // All other Turf APIs require authentication
                 .requestMatchers("/api/turfs/**").authenticated()
 
-                // Everything else requires authentication
+                // Any remaining endpoints must be authenticated
                 .anyRequest().authenticated()
             )
 
-            // ✅ Use stateless session (JWT only)
+            // ✅ Stateless session for JWT
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // ✅ Add JWT authentication filter before UsernamePasswordAuthenticationFilter
+            // ✅ JWT filter before UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

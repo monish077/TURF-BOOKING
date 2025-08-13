@@ -8,6 +8,7 @@ import com.example.demo.turfbooking.repository.UserRepository;
 import com.example.demo.turfbooking.service.TurfService;
 import com.example.demo.turfbooking.jwt.JwtUtil;
 
+import io.jsonwebtoken.JwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import io.jsonwebtoken.JwtException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,62 +47,30 @@ public class TurfController {
         this.cloudinary = cloudinary;
     }
 
-    // Get all turfs
+    // =================== Public Endpoints ===================
+
     @GetMapping
     public List<Turf> getAllTurfs() {
         return turfService.getAllTurfs();
     }
 
-    // Public endpoint to get all turfs
     @GetMapping("/public")
     public ResponseEntity<List<Turf>> getAllPublicTurfs() {
         return ResponseEntity.ok(turfService.getAllTurfs());
     }
 
-    // Get turfs created by logged-in admin
+    // =================== Protected Endpoints ===================
+
     @GetMapping("/admin")
     public ResponseEntity<?> getTurfsByAdmin(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                logger.warn("Missing or invalid Authorization header");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Unauthorized: Missing or invalid token");
+            User admin = validateAndGetUser(authHeader);
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Invalid token or user");
             }
 
-            String jwt = authHeader.substring(7); // remove "Bearer "
-            String email;
-            try {
-                email = jwtUtil.extractUsername(jwt);
-            } catch (JwtException e) {
-                logger.warn("Invalid or expired JWT: {}", e.getMessage());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Unauthorized: Invalid or expired token");
-            } catch (RuntimeException e) {
-                logger.warn("Token processing error: {}", e.getMessage());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Unauthorized: Token processing error");
-            }
-
-            if (email == null || email.isBlank()) {
-                logger.error("JWT token did not contain a valid email");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Unauthorized: Invalid token payload");
-            }
-
-            Optional<User> adminOpt = userRepository.findByEmail(email);
-            if (adminOpt.isEmpty()) {
-                logger.warn("No admin found with email: {}", email);
-                return ResponseEntity.ok(Collections.emptyList());
-            }
-
-            User admin = adminOpt.get();
             List<Turf> turfs = turfService.getTurfsByAdmin(admin);
-            if (turfs == null) {
-                turfs = new ArrayList<>();
-            }
-
-            logger.info("Found {} turfs for admin {}", turfs.size(), email);
-            return ResponseEntity.ok(turfs);
+            return ResponseEntity.ok(turfs != null ? turfs : Collections.emptyList());
 
         } catch (Exception e) {
             logger.error("Unexpected error retrieving admin turfs", e);
@@ -112,12 +79,11 @@ public class TurfController {
         }
     }
 
-    // Get turf by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getTurfById(@PathVariable Long id) {
         try {
-            Optional<Turf> turfOpt = turfService.getTurfById(id);
-            return turfOpt.<ResponseEntity<?>>map(ResponseEntity::ok)
+            return turfService.getTurfById(id)
+                    .<ResponseEntity<?>>map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body("Turf not found with ID: " + id));
         } catch (Exception e) {
@@ -127,7 +93,6 @@ public class TurfController {
         }
     }
 
-    // Add turf with main + additional images
     @PostMapping("/add-with-image")
     public ResponseEntity<?> addTurfWithImage(@RequestParam("name") String name,
                                               @RequestParam("location") String location,
@@ -139,21 +104,16 @@ public class TurfController {
                                               @RequestParam(value = "images", required = false) List<MultipartFile> otherImages,
                                               @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Unauthorized: Missing or invalid token");
+            User admin = validateAndGetUser(authHeader);
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Invalid token or user");
             }
-
-            String jwt = authHeader.substring(7);
-            String email = jwtUtil.extractUsername(jwt);
-            User admin = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Admin not found"));
 
             List<String> imageUrls = new ArrayList<>();
             if (mainImage != null && !mainImage.isEmpty()) {
                 imageUrls.add(uploadToCloudinary(mainImage));
             }
-            if (otherImages != null && !otherImages.isEmpty()) {
+            if (otherImages != null) {
                 for (MultipartFile image : otherImages) {
                     if (image != null && !image.isEmpty()) {
                         imageUrls.add(uploadToCloudinary(image));
@@ -173,6 +133,7 @@ public class TurfController {
 
             Turf savedTurf = turfService.addTurf(turf);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedTurf);
+
         } catch (Exception e) {
             logger.error("Error adding turf with images", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -180,13 +141,12 @@ public class TurfController {
         }
     }
 
-    // Upload additional images to existing turf
     @PostMapping("/{id}/images")
     public ResponseEntity<?> uploadTurfImages(@PathVariable Long id,
                                               @RequestParam("images") List<MultipartFile> images) {
         try {
             List<String> urls = new ArrayList<>();
-            if (images != null && !images.isEmpty()) {
+            if (images != null) {
                 for (MultipartFile image : images) {
                     if (image != null && !image.isEmpty()) {
                         urls.add(uploadToCloudinary(image));
@@ -202,16 +162,13 @@ public class TurfController {
         }
     }
 
-    // Update turf details
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTurf(@PathVariable Long id, @RequestBody Turf turf) {
         try {
             Turf updated = turfService.updateTurf(id, turf);
-            if (updated != null) {
-                return ResponseEntity.ok(updated);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found with ID: " + id);
-            }
+            return updated != null
+                    ? ResponseEntity.ok(updated)
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found with ID: " + id);
         } catch (Exception e) {
             logger.error("Error updating turf", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -219,15 +176,12 @@ public class TurfController {
         }
     }
 
-    // Delete turf
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTurf(@PathVariable Long id) {
         try {
-            if (turfService.deleteTurf(id)) {
-                return ResponseEntity.ok("Turf deleted successfully.");
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found.");
-            }
+            return turfService.deleteTurf(id)
+                    ? ResponseEntity.ok("Turf deleted successfully.")
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Turf not found.");
         } catch (Exception e) {
             logger.error("Error deleting turf", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -235,7 +189,6 @@ public class TurfController {
         }
     }
 
-    // Test DB connection
     @GetMapping("/test-db")
     public ResponseEntity<?> testDb() {
         try {
@@ -247,7 +200,32 @@ public class TurfController {
         }
     }
 
-    // Cloudinary upload helper
+    // =================== Helper Methods ===================
+
+    private User validateAndGetUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            logger.warn("Missing or invalid Authorization header");
+            return null;
+        }
+
+        String jwt = authHeader.substring(7);
+        try {
+            String email = jwtUtil.extractEmail(jwt);
+            if (email == null || email.isBlank()) {
+                logger.error("JWT token did not contain a valid email");
+                return null;
+            }
+            return userRepository.findByEmail(email).orElse(null);
+
+        } catch (JwtException e) {
+            logger.warn("Invalid or expired JWT: {}", e.getMessage());
+            return null;
+        } catch (Exception e) {
+            logger.error("Error processing token", e);
+            return null;
+        }
+    }
+
     private String uploadToCloudinary(MultipartFile file) throws Exception {
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
         return (String) uploadResult.get("secure_url");

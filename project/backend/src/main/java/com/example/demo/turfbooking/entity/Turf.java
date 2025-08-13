@@ -1,6 +1,6 @@
 package com.example.demo.turfbooking.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class Turf {
     private double pricePerHour;
 
     // ✅ Store multiple image URLs in a separate table (turf_images)
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER) // <-- EAGER to avoid LazyInitializationException
     @CollectionTable(name = "turf_images", joinColumns = @JoinColumn(name = "turf_id"))
     @Column(name = "image_url", columnDefinition = "TEXT")
     private List<String> imageUrls = new ArrayList<>();
@@ -37,7 +37,7 @@ public class Turf {
     // ✅ Link to admin (user who created this turf)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnore // <-- Prevents JSON serialization from triggering lazy loading
     private User admin;
 
     // === Constructors ===
@@ -55,78 +55,32 @@ public class Turf {
     }
 
     // === Getters and Setters ===
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
-    public String getName() {
-        return name;
-    }
+    public double getPricePerHour() { return pricePerHour; }
+    public void setPricePerHour(double pricePerHour) { this.pricePerHour = pricePerHour; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
 
-    public String getLocation() {
-        return location;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
+    public String getFacilities() { return facilities; }
+    public void setFacilities(String facilities) { this.facilities = facilities; }
 
-    public double getPricePerHour() {
-        return pricePerHour;
-    }
+    public String getAvailableSlots() { return availableSlots; }
+    public void setAvailableSlots(String availableSlots) { this.availableSlots = availableSlots; }
 
-    public void setPricePerHour(double pricePerHour) {
-        this.pricePerHour = pricePerHour;
-    }
-
-    public List<String> getImageUrls() {
-        return imageUrls;
-    }
-
-    public void setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getFacilities() {
-        return facilities;
-    }
-
-    public void setFacilities(String facilities) {
-        this.facilities = facilities;
-    }
-
-    public String getAvailableSlots() {
-        return availableSlots;
-    }
-
-    public void setAvailableSlots(String availableSlots) {
-        this.availableSlots = availableSlots;
-    }
-
-    public User getAdmin() {
-        return admin;
-    }
-
-    public void setAdmin(User admin) {
-        this.admin = admin;
-    }
+    public User getAdmin() { return admin; }
+    public void setAdmin(User admin) { this.admin = admin; }
 
     @Override
     public String toString() {
