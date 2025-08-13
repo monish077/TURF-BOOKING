@@ -44,11 +44,6 @@ const Landing = () => {
           </Link>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="footer">
-        © {new Date().getFullYear()} MARS ARENA | All rights reserved.
-      </footer>
     </div>
   );
 };
