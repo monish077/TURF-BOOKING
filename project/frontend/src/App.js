@@ -6,9 +6,6 @@ function App() {
   return (
     <div className="page-container">
       <AppRouter />
-      <footer className="footer-bar">
-        © {new Date().getFullYear()} Mars Arena | All Rights Reserved
-      </footer>
     </div>
   );
 }
