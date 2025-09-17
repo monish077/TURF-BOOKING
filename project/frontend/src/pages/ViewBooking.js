@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axiosInstance from "../api/axiosConfig"; // ✅ Shared axios config
 import "../assets/styles/viewbookings.css";
 
@@ -15,10 +15,12 @@ const ViewBookings = () => {
     };
   };
 
-  const fetchBookings = async () => {
+  // Wrap fetchBookings with useCallback to memoize the function
+  const fetchBookings = useCallback(async () => {
     const userEmail = sessionStorage.getItem("email");
     if (!userEmail) {
       console.warn("No email found in sessionStorage");
+      setLoading(false);
       return;
     }
 
@@ -30,7 +32,7 @@ const ViewBookings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleCancel = async (id) => {
     if (window.confirm("Are you sure you want to cancel this booking?")) {
@@ -43,9 +45,10 @@ const ViewBookings = () => {
     }
   };
 
+  // Now fetchBookings is a stable dependency, so add it here
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   return (
     <div className="view-bookings-page">
