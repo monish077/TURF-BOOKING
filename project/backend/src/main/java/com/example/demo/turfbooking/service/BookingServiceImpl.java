@@ -31,12 +31,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Optional<Booking> getBookingById(Long id) {
+    public Optional<Booking> getBookingById(String id) {  // Changed to String
         return bookingRepository.findById(id);
     }
 
     @Override
-    public List<Booking> getBookingsByTurfId(Long turfId) {
+    public List<Booking> getBookingsByTurfId(String turfId) {
         return bookingRepository.findByTurfId(turfId);
     }
 
@@ -45,21 +45,24 @@ public class BookingServiceImpl implements BookingService {
         return bookingRepository.findByUserEmail(email);
     }
 
-    // ✅ NEW: Get bookings for all turfs owned by a specific admin
     @Override
     public List<Booking> getBookingsByAdminEmail(String adminEmail) {
+        // Get all turfs administered by this admin
         List<Turf> adminTurfs = turfRepository.findByAdmin_Email(adminEmail);
-        List<Long> turfIds = adminTurfs.stream()
-                .map(Turf::getId)
+
+        // Convert turf IDs to String to match 'turfId' in Booking
+        List<String> turfIds = adminTurfs.stream()
+                .map(turf -> turf.getId().toString()) // Convert Long to String
                 .collect(Collectors.toList());
 
+        // Filter bookings whose turfId is among the admin's turfs
         return bookingRepository.findAll().stream()
-                .filter(booking -> turfIds.contains(booking.getTurfId()))
+                .filter(booking -> booking.getTurfId() != null && turfIds.contains(booking.getTurfId()))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteBooking(Long id) {
+    public void deleteBooking(String id) {  // Changed to String
         bookingRepository.deleteById(id);
     }
 }

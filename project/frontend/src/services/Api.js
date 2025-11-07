@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://turf-booking-pp67.onrender.com/api";
+// 🔥 CHANGE THIS LINE - Use local backend instead of production
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 // 🔐 Auth header using JWT token from sessionStorage
 const authHeader = () => {
@@ -94,7 +96,7 @@ export const getBookingsByTurfId = (turfId) =>
 export const getBookingsByUserEmail = (email) =>
   axios.get(`${API_BASE_URL}/bookings/user/${email}`, authHeader());
 
-// ✅ Get admin’s bookings using JWT (ADMIN)
+// ✅ Get admin's bookings using JWT (ADMIN)
 export const getAdminBookings = () =>
   axios.get(`${API_BASE_URL}/bookings/admin`, authHeader());
 

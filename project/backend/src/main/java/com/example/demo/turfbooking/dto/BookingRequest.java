@@ -6,7 +6,7 @@ import lombok.Data;
 public class BookingRequest {
     private String userName;
     private String userEmail;
-    private Long turfId;
+    private String turfId;    
     private String turfName;
     private String date;
     private String slot;

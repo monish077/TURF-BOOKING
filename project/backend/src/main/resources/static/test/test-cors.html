@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 CORS & API Test</h1>
+        
+        <div class="info result">
+            <strong>Test Credentials:</strong><br>
+            Email: user@example.com<br>
+            Password: password123
+        </div>
+
+        <div>
+            <button onclick="testCORS()">1. Test CORS Connection</button>
+            <button onclick="testLogin()">2. Test Login API</button>
+            <button onclick="testPublicAPI()">3. Test Public API</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        
+        async function testCORS() {
+            showResult('Testing CORS preflight...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/users/login`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                if (response.ok) {
+                    showResult(`
+                        ✅ <strong>CORS PREFLIGHT SUCCESS</strong><br>
+                        Status: ${response.status}<br>
+                        Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}
+                    `, 'success');
+                } else {
+                    showResult(`
+                        ❌ <strong>CORS PREFLIGHT FAILED</strong><br>
+                        Status: ${response.status}<br>
+                        Check browser console for details
+                    `, 'error');
+                }
+            } catch (error) {
+                showResult(`
+                    🚨 <strong>CORS PREFLIGHT ERROR</strong><br>
+                    Error: ${error.message}<br>
+                    This usually means CORS is not configured properly
+                `, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            showResult('Sending login request...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include', // Important for cookies
+                    body: JSON.stringify({
+                        email: 'user@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`
+                        ✅ <strong>LOGIN SUCCESS!</strong><br>
+                        Status: ${response.status}<br>
+                        Token Received: ${data.token ? 'YES' : 'NO'}<br>
+                        Message: ${data.message || 'Success'}
+                    `, 'success');
+                    
+                    // Save token if received
+                    if (data.token) {
+                        localStorage.setItem('jwtToken', data.token);
+                        console.log('JWT Token saved to localStorage');
+                    }
+                } else {
+                    showResult(`
+                        ❌ <strong>LOGIN FAILED</strong><br>
+                        Status: ${response.status}<br>
+                        Error: ${data.error || 'Unknown error'}<br>
+                        Message: ${data.message || 'No message'}
+                    `, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`
+                    🚨 <strong>NETWORK ERROR</strong><br>
+                    Error: ${error.message}<br>
+                    This could be CORS or network connectivity issue
+                `, 'error');
+                console.error('Login error details:', error);
+            }
+        }
+        
+        async function testPublicAPI() {
+            showResult('Testing public API...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/test/connection`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const text = await response.text();
+                
+                if (response.ok) {
+                    showResult(`
+                        ✅ <strong>PUBLIC API SUCCESS</strong><br>
+                        Status: ${response.status}<br>
+                        Response: ${text}
+                    `, 'success');
+                } else {
+                    showResult(`
+                        ❌ <strong>PUBLIC API FAILED</strong><br>
+                        Status: ${response.status}<br>
+                        Response: ${text}
+                    `, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`
+                    🚨 <strong>PUBLIC API ERROR</strong><br>
+                    Error: ${error.message}
+                `, 'error');
+            }
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+        }
+        
+        function clearResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+        }
+        
+        // Test CORS on page load
+        window.addEventListener('load', testCORS);
+    </script>
+</body>
+</html>

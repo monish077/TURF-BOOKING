@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TurfService {
@@ -35,7 +37,7 @@ public class TurfService {
         return turfRepo.findByAdmin(admin);
     }
 
-    public Optional<Turf> getTurfById(Long id) {
+    public Optional<Turf> getTurfById(String id) {
         return turfRepo.findById(id);
     }
 
@@ -43,7 +45,7 @@ public class TurfService {
         return turfRepo.save(turf);
     }
 
-    public boolean deleteTurf(Long id) {
+    public boolean deleteTurf(String id) {
         if (turfRepo.existsById(id)) {
             turfRepo.deleteById(id);
             return true;
@@ -51,7 +53,7 @@ public class TurfService {
         return false;
     }
 
-    public Turf updateTurf(Long id, Turf updatedTurf) {
+    public Turf updateTurf(String id, Turf updatedTurf) {
         return turfRepo.findById(id).map(existingTurf -> {
             existingTurf.setName(updatedTurf.getName());
             existingTurf.setLocation(updatedTurf.getLocation());
@@ -72,13 +74,12 @@ public class TurfService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Image file is empty or null.");
         }
-        Map<String, Object> uploadResult = cloudinary.uploader()
-                .upload(file.getBytes(), ObjectUtils.emptyMap());
+        var uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
         return (String) uploadResult.get("secure_url");
     }
 
     // Upload multiple images for existing turf
-    public List<String> uploadImagesForTurf(Long turfId, List<MultipartFile> images) throws IOException {
+    public List<String> uploadImagesForTurf(String turfId, List<MultipartFile> images) throws IOException {
         Turf turf = turfRepo.findById(turfId)
                 .orElseThrow(() -> new RuntimeException("Turf not found with ID: " + turfId));
 
@@ -97,7 +98,7 @@ public class TurfService {
     }
 
     // Add pre-uploaded image URLs
-    public Turf addImagesToTurf(Long turfId, List<String> imageUrls) {
+    public Turf addImagesToTurf(String turfId, List<String> imageUrls) {
         Turf turf = turfRepo.findById(turfId)
                 .orElseThrow(() -> new RuntimeException("Turf not found with ID: " + turfId));
 

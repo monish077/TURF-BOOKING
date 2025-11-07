@@ -1,38 +1,31 @@
 package com.example.demo.turfbooking.entity;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import lombok.*;
 
-@Entity
-@Table(name = "bookings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document(collection = "bookings")
 public class Booking {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    @Column
     private String userName;
 
-    @Column
     private String userEmail;
 
-    @Column
-    private Long turfId;
+    private String turfId;
 
-    @Column
     private String turfName;
 
-    @Column
     private String date;
 
-    @Column
     private String slot;
 
-    @Column
     private double price;
 }

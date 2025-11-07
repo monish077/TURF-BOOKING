@@ -27,7 +27,7 @@ public class BookingController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ✅ Create a new booking
+    // Create a new booking
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         try {
@@ -52,13 +52,16 @@ public class BookingController {
         }
     }
 
-    // ✅ 🔐 Secure: Get bookings for the admin’s turfs using JWT
+    // Secure: Get bookings for the admin’s turfs using JWT
     @GetMapping("/admin")
     public ResponseEntity<?> getBookingsForAdminTurfs(HttpServletRequest request) {
         try {
             String authHeader = request.getHeader("Authorization");
-            String token = authHeader.replace("Bearer ", "");
-            String adminEmail = jwtUtil.extractUsername(token); // Extract from JWT
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body("Unauthorized: Missing or invalid Authorization header");
+            }
+            String token = authHeader.substring(7);
+            String adminEmail = jwtUtil.extractUsername(token);
 
             System.out.println("📩 Fetching bookings for Admin: " + adminEmail);
 
@@ -71,7 +74,7 @@ public class BookingController {
         }
     }
 
-    // ✅ Get all bookings
+    // Get all bookings
     @GetMapping("/all")
     public ResponseEntity<?> getAllBookings() {
         try {
@@ -83,7 +86,7 @@ public class BookingController {
         }
     }
 
-    // ✅ Get bookings by user email
+    // Get bookings by user email
     @GetMapping("/user/{email}")
     public ResponseEntity<?> getBookingsByUserEmail(@PathVariable String email) {
         try {
@@ -95,9 +98,9 @@ public class BookingController {
         }
     }
 
-    // ✅ Get bookings by turf ID
+    // Get bookings by turf ID
     @GetMapping("/turf/{turfId}")
-    public ResponseEntity<?> getBookingsByTurfId(@PathVariable Long turfId) {
+    public ResponseEntity<?> getBookingsByTurfId(@PathVariable String turfId) {
         try {
             List<Booking> bookings = bookingService.getBookingsByTurfId(turfId);
             return ResponseEntity.ok(bookings);
@@ -107,9 +110,9 @@ public class BookingController {
         }
     }
 
-    // ✅ Send confirmation email
+    // Send confirmation email
     @GetMapping("/send-confirmation/{bookingId}")
-    public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
+    public ResponseEntity<?> sendConfirmationEmail(@PathVariable String bookingId) {  // Changed to String
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(bookingId);
             if (optionalBooking.isPresent()) {
@@ -132,9 +135,9 @@ public class BookingController {
         }
     }
 
-    // ✅ Get booking by ID
+    // Get booking by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
+    public ResponseEntity<?> getBookingById(@PathVariable String id) {  // Changed to String
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
             return optionalBooking.<ResponseEntity<?>>map(ResponseEntity::ok)
@@ -145,9 +148,9 @@ public class BookingController {
         }
     }
 
-    // ✅ Delete booking
+    // Delete booking
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBooking(@PathVariable String id) {  // Changed to String
         try {
             bookingService.deleteBooking(id);
             return ResponseEntity.noContent().build();

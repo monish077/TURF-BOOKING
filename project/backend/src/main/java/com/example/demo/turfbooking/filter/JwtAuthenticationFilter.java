@@ -25,7 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-    // ✅ Endpoints that do not require JWT authentication
+    // Endpoints exempt from JWT check
     private static final List<String> EXCLUDED_PATHS = List.of(
             "/api/users/login",
             "/api/users/register",
@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/users/reset-password",
             "/api/users/test-mail",
             "/api/turfs/public",
-            "/api/auth/refresh" // <-- allow refresh without login
+            "/api/auth/refresh"
     );
 
     @Override
@@ -46,13 +46,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String requestPath = request.getRequestURI();
 
-            // ✅ Skip JWT check for OPTIONS (CORS preflight) requests
+            // Skip OPTIONS requests
             if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            // ✅ Skip JWT check for public endpoints
+            // Skip JWT check for exempted endpoints
             if (EXCLUDED_PATHS.stream().anyMatch(requestPath::startsWith)) {
                 filterChain.doFilter(request, response);
                 return;
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = null;
             String jwt = null;
 
-            // ✅ Extract JWT token from Authorization header
+            // Extract JWT token
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 jwt = authHeader.substring(7);
                 try {
@@ -72,12 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
 
-            // ✅ If email is extracted and no authentication is set
+            // If email extracted and no auth set, validate and set authentication
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 try {
                     UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
-                    // ✅ Validate token against user details
                     if (jwtUtil.validateToken(jwt, userDetails)) {
                         UsernamePasswordAuthenticationToken authToken =
                                 new UsernamePasswordAuthenticationToken(
@@ -97,10 +96,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (Exception e) {
             logger.error("JWT filter error: " + e.getMessage(), e);
-            // Don't block request, just proceed without authentication
+            // Proceed without blocking request
         }
 
-        // ✅ Continue filter chain regardless
         filterChain.doFilter(request, response);
     }
 }

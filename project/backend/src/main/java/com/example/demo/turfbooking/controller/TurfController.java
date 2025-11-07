@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/turfs")
@@ -80,7 +79,7 @@ public class TurfController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTurfById(@PathVariable Long id) {
+    public ResponseEntity<?> getTurfById(@PathVariable String id) {
         try {
             return turfService.getTurfById(id)
                     .<ResponseEntity<?>>map(ResponseEntity::ok)
@@ -142,7 +141,7 @@ public class TurfController {
     }
 
     @PostMapping("/{id}/images")
-    public ResponseEntity<?> uploadTurfImages(@PathVariable Long id,
+    public ResponseEntity<?> uploadTurfImages(@PathVariable String id,
                                               @RequestParam("images") List<MultipartFile> images) {
         try {
             List<String> urls = new ArrayList<>();
@@ -163,7 +162,7 @@ public class TurfController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTurf(@PathVariable Long id, @RequestBody Turf turf) {
+    public ResponseEntity<?> updateTurf(@PathVariable String id, @RequestBody Turf turf) {
         try {
             Turf updated = turfService.updateTurf(id, turf);
             return updated != null
@@ -177,7 +176,7 @@ public class TurfController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTurf(@PathVariable Long id) {
+    public ResponseEntity<String> deleteTurf(@PathVariable String id) {
         try {
             return turfService.deleteTurf(id)
                     ? ResponseEntity.ok("Turf deleted successfully.")

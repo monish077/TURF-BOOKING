@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 public class CloudinaryConfig {
 
@@ -17,11 +20,25 @@ public class CloudinaryConfig {
         logger.info("Reading CLOUDINARY_URL environment variable...");
 
         if (cloudinaryUrl == null || cloudinaryUrl.isEmpty()) {
-            logger.error("CLOUDINARY_URL environment variable is not set or empty!");
-            throw new IllegalStateException("CLOUDINARY_URL environment variable is not set");
+            logger.warn("⚠️ CLOUDINARY_URL environment variable is not set or empty!");
+            logger.info("🔄 Using configured Cloudinary credentials...");
+            
+            // Use your actual Cloudinary credentials
+            return createCloudinaryWithCredentials();
         }
 
-        logger.info("CLOUDINARY_URL found and being used to configure Cloudinary");
+        logger.info("✅ CLOUDINARY_URL found and being used to configure Cloudinary");
         return new Cloudinary(cloudinaryUrl);
+    }
+
+    private Cloudinary createCloudinaryWithCredentials() {
+        Map<String, String> config = new HashMap<>();
+        config.put("cloud_name", "dwrbkpnir");
+        config.put("api_key", "995136623584273");
+        config.put("api_secret", "REBgwjgmmDnfoPTSOfujBhDz1sc");
+        
+        Cloudinary cloudinary = new Cloudinary(config);
+        logger.info("✅ Cloudinary configured successfully with credentials for cloud: dwrbkpnir");
+        return cloudinary;
     }
 }

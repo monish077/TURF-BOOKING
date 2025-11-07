@@ -2,17 +2,17 @@ package com.example.demo.turfbooking.repository;
 
 import com.example.demo.turfbooking.entity.Turf;
 import com.example.demo.turfbooking.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface TurfRepository extends JpaRepository<Turf, Long> {
+public interface TurfRepository extends MongoRepository<Turf, String> {
 
-    // ✅ This is the method you're missing
+    // Find turfs by admin user reference
     List<Turf> findByAdmin(User admin);
 
-    // ✅ You can also keep this if needed
+    // Find turfs by admin email
     List<Turf> findByAdmin_Email(String email);
 }

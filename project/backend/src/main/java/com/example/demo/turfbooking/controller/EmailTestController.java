@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
     "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",
     "http://localhost:3000"
 }, allowCredentials = "true")
-
 public class EmailTestController {
 
     @Autowired
@@ -23,7 +22,7 @@ public class EmailTestController {
     }
 
     /**
-     * ✅ Sends a basic test email to verify SMTP configuration
+     * Sends a basic test email to verify SMTP configuration
      * Usage: GET /test/send
      */
     @GetMapping("/send")
@@ -46,9 +45,8 @@ public class EmailTestController {
     }
 
     /**
-     * ✅ Sends a custom email using query parameters
-     * Example:
-     * GET /test/sendCustom?to=email@example.com&subject=Hello&body=Hi+there
+     * Sends a custom email using query parameters
+     * Example: GET /test/sendCustom?to=email@example.com&subject=Hello&body=Hi+there
      */
     @GetMapping("/sendCustom")
     public String sendCustomEmail(

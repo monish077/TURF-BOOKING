@@ -14,7 +14,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Alias method for compatibility with controller
+    // Alias for compatibility with controller
     public String extractUsername(String token) {
         return extractEmail(token);
     }
@@ -31,10 +31,10 @@ public class JwtUtil {
     @PostConstruct
     public void init() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        this.secretKey = Keys.hmacShaKeyFor(keyBytes); // Uses HS512 algorithm
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes); // HS512 algorithm
     }
 
-    // Generate a JWT token containing email as subject and role as claim
+    // Generate JWT token with email (subject) and role as claim
     public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
@@ -45,7 +45,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Extract all claims from the JWT token
+    // Extract all claims from token
     public Claims extractClaims(String token) {
         try {
             return Jwts.parserBuilder()
@@ -58,22 +58,22 @@ public class JwtUtil {
         }
     }
 
-    // Extract the email (subject) from the JWT token
+    // Extract email (subject) from token
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
     }
 
-    // Extract the user role from the JWT token
+    // Extract user role from token
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
     }
 
-    // Check if the token is expired
+    // Check if token expired
     public boolean isTokenExpired(String token) {
         return extractClaims(token).getExpiration().before(new Date());
     }
 
-    // Validate the token by matching email and checking expiration
+    // Validate token's email and expiration
     public boolean validateToken(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
         return email.equals(userDetails.getUsername()) && !isTokenExpired(token);

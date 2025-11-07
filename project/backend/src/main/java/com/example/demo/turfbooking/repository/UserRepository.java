@@ -1,13 +1,15 @@
 package com.example.demo.turfbooking.repository;
 
 import com.example.demo.turfbooking.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByEmail(String email);
+@Repository
+public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
-    Optional<User> findByVerificationToken(String token);
-    Optional<User> findByResetPasswordToken(String token);
+    boolean existsByEmail(String email);
+    Optional<User> findByVerificationToken(String verificationToken);
+    Optional<User> findByResetPasswordToken(String resetPasswordToken);
 }

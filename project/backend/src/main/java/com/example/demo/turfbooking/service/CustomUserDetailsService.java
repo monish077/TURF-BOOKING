@@ -19,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
 
     /**
-     * ✅ Load user by email (username) for Spring Security
+     * Load user by email (username) for Spring Security
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -27,24 +27,24 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Email must not be null or empty");
         }
 
-        // 🔍 Fetch user from DB
+        // Fetch user from DB
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found with email: " + email)
                 );
 
-        // ❌ Block unverified accounts
+        // Block unverified accounts
         if (!user.isEnabled()) {
             throw new DisabledException("Email not verified. Please verify before login.");
         }
 
-        // ✅ Guard against null role
+        // Guard against null role
         Role role = user.getRole();
         if (role == null) {
             throw new UsernameNotFoundException("User role is not set for email: " + email);
         }
 
-        // ✅ Spring expects roles prefixed with "ROLE_"
+        // Spring expects roles prefixed with "ROLE_"
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role.name());
 
         return new org.springframework.security.core.userdetails.User(
