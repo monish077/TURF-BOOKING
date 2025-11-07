@@ -97,6 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             logger.error("JWT filter error: " + e.getMessage(), e);
             // Proceed without blocking request
+            //monish
         }
 
         filterChain.doFilter(request, response);
