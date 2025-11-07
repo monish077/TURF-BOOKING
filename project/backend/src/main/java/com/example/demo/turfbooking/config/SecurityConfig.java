@@ -17,12 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -39,51 +33,12 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-    // ✅ CORS Configuration
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Allowed origins - add your frontend URLs
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "https://turf-booking-seven.vercel.app",
-            "https://turf-booking-frontend.vercel.app",
-            "http://localhost:3000",
-            "http://localhost:5173"
-        ));
-        
-        // Allowed methods
-        configuration.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        ));
-        
-        // Allowed headers
-        configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "Accept", "X-Requested-With", 
-            "Cache-Control", "Origin", "Access-Control-Request-Method",
-            "Access-Control-Request-Headers"
-        ));
-        
-        // Exposed headers
-        configuration.setExposedHeaders(Arrays.asList(
-            "Authorization", "Content-Type", "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"
-        ));
-        
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // 1 hour
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // ✅ Enable CORS using our custom configuration
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
+            // ✅ Enable CORS (will use CorsConfig class)
+            .cors(cors -> {})
+            
             // ❌ Disable CSRF because we use JWT (stateless)
             .csrf(csrf -> csrf.disable())
 
@@ -155,7 +110,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/test/**",
                     "/api/debug/**",
-                    "/api/test/**",  // ✅ ADDED THIS LINE - TEST ENDPOINTS ARE NOW PUBLIC
+                    "/api/test/**",
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll()
@@ -168,9 +123,10 @@ public class SecurityConfig {
                     "/css/**",
                     "/js/**",
                     "/images/**",
-                    "/*.html",           // ← ADD THIS
+                    "/*.html",
                     "/**.html",
-                    "/error"
+                    "/error",
+                    "/uploads/**"
                 ).permitAll()
 
                 // Public turf operations (read-only)
@@ -284,7 +240,7 @@ public class SecurityConfig {
     // ✅ Password encoder bean (BCrypt)
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12); // Increased strength for better security
+        return new BCryptPasswordEncoder(12);
     }
 
     // ✅ AuthenticationManager bean
