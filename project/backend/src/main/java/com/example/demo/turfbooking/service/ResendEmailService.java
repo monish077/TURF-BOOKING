@@ -11,14 +11,39 @@ import java.util.Map;
 @Service
 public class ResendEmailService {
 
-    @Value("${resend.api.key}")
+    @Value("${resend.api.key:}")
     private String resendApiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // Add initialization logging
+    @PostConstruct
+    public void init() {
+        System.out.println("🔑 === RESEND SERVICE INITIALIZATION ===");
+        System.out.println("Resend API Key configured: " + (resendApiKey != null));
+        if (resendApiKey != null) {
+            System.out.println("API Key length: " + resendApiKey.length());
+            System.out.println("API Key starts with: " + resendApiKey.substring(0, Math.min(8, resendApiKey.length())) + "...");
+        } else {
+            System.out.println("❌ RESEND API KEY IS NULL - Check environment variable RESEND_API_KEY");
+        }
+        System.out.println("🏁 === RESEND SERVICE INITIALIZATION COMPLETE ===");
+    }
+
     public void sendVerificationEmail(String toEmail, String verificationUrl) {
         try {
-            System.out.println("🚀 Sending Resend verification email to: " + toEmail);
+            System.out.println("🚀 === RESEND VERIFICATION EMAIL START ===");
+            System.out.println("📧 Recipient: " + toEmail);
+            System.out.println("🔗 Verification URL: " + verificationUrl);
+            
+            // Validate API key
+            if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
+                System.out.println("❌ CRITICAL: RESEND API KEY IS MISSING OR EMPTY");
+                System.out.println("Please set RESEND_API_KEY environment variable in Render");
+                throw new RuntimeException("Resend API key is not configured");
+            }
+            
+            System.out.println("🔑 Using API Key: " + resendApiKey.substring(0, 8) + "..." + resendApiKey.substring(resendApiKey.length() - 4));
 
             String apiUrl = "https://api.resend.com/emails";
 
@@ -62,12 +87,20 @@ public class ResendEmailService {
             
             emailRequest.put("html", htmlContent);
 
+            System.out.println("📧 Email payload created");
+            System.out.println("From: Turf Booking <onboarding@resend.dev>");
+            System.out.println("To: " + toEmail);
+            System.out.println("Subject: Verify Your Email - Turf Booking");
+
             // Create headers with API key
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + resendApiKey);
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(emailRequest, headers);
+
+            System.out.println("📤 Sending request to Resend API...");
+            System.out.println("URL: " + apiUrl);
 
             // Send the request
             ResponseEntity<String> response = restTemplate.exchange(
@@ -77,25 +110,43 @@ public class ResendEmailService {
                 String.class
             );
 
+            System.out.println("📥 === RESEND API RESPONSE ===");
+            System.out.println("Status Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+            System.out.println("Response Headers: " + response.getHeaders());
+
             if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("✅ Resend email sent successfully to: " + toEmail);
-                System.out.println("Response: " + response.getBody());
+                System.out.println("✅ RESEND SUCCESS - Email sent successfully to: " + toEmail);
+                System.out.println("Response ID: " + response.getBody());
             } else {
-                System.out.println("❌ Resend email failed. Status: " + response.getStatusCode());
-                System.out.println("Response: " + response.getBody());
-                throw new RuntimeException("Resend API returned: " + response.getStatusCode());
+                System.out.println("❌ RESEND FAILED - HTTP Status: " + response.getStatusCode());
+                System.out.println("Error Response: " + response.getBody());
+                throw new RuntimeException("Resend API returned error: " + response.getStatusCode() + " - " + response.getBody());
             }
 
+            System.out.println("🏁 === RESEND VERIFICATION EMAIL END ===");
+
         } catch (Exception e) {
-            System.out.println("❌ Resend email failed: " + e.getMessage());
+            System.out.println("💥 RESEND VERIFICATION EMAIL ERROR ===");
+            System.out.println("Error Type: " + e.getClass().getSimpleName());
+            System.out.println("Error Message: " + e.getMessage());
+            System.out.println("Stack Trace:");
             e.printStackTrace();
-            throw new RuntimeException("Failed to send verification email: " + e.getMessage());
+            System.out.println("💥 === RESEND VERIFICATION EMAIL ERROR END ===");
+            throw new RuntimeException("Failed to send verification email via Resend: " + e.getMessage());
         }
     }
 
     public void sendTestEmail(String toEmail) {
         try {
-            System.out.println("🚀 Sending Resend test email to: " + toEmail);
+            System.out.println("🚀 === RESEND TEST EMAIL START ===");
+            System.out.println("📧 Test Recipient: " + toEmail);
+            
+            // Validate API key
+            if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
+                System.out.println("❌ RESEND API KEY NOT CONFIGURED");
+                return;
+            }
 
             String apiUrl = "https://api.resend.com/emails";
 
@@ -105,11 +156,15 @@ public class ResendEmailService {
             emailRequest.put("subject", "✅ Test Email from Turf Booking");
             emailRequest.put("html", "<p>This is a <strong>test email</strong> from your Turf Booking application using Resend API!</p>");
 
+            System.out.println("📧 Test email payload created");
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + resendApiKey);
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(emailRequest, headers);
+
+            System.out.println("📤 Sending test request to Resend API...");
 
             ResponseEntity<String> response = restTemplate.exchange(
                 apiUrl, 
@@ -118,23 +173,36 @@ public class ResendEmailService {
                 String.class
             );
 
+            System.out.println("📥 === RESEND TEST RESPONSE ===");
+            System.out.println("Status Code: " + response.getStatusCode());
+            System.out.println("Response Body: " + response.getBody());
+
             if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("✅ Resend test email sent successfully to: " + toEmail);
-                System.out.println("Response: " + response.getBody());
+                System.out.println("✅ RESEND TEST SUCCESS - Test email sent to: " + toEmail);
             } else {
-                System.out.println("❌ Resend test email failed. Status: " + response.getStatusCode());
-                System.out.println("Response: " + response.getBody());
+                System.out.println("❌ RESEND TEST FAILED - Status: " + response.getStatusCode());
+                System.out.println("Error: " + response.getBody());
             }
 
+            System.out.println("🏁 === RESEND TEST EMAIL END ===");
+
         } catch (Exception e) {
-            System.out.println("❌ Resend test email failed: " + e.getMessage());
+            System.out.println("💥 RESEND TEST EMAIL ERROR: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public void sendPasswordResetEmail(String toEmail, String resetUrl) {
         try {
-            System.out.println("🚀 Sending Resend password reset email to: " + toEmail);
+            System.out.println("🚀 === RESEND PASSWORD RESET EMAIL START ===");
+            System.out.println("📧 Recipient: " + toEmail);
+            System.out.println("🔗 Reset URL: " + resetUrl);
+            
+            // Validate API key
+            if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
+                System.out.println("❌ RESEND API KEY NOT CONFIGURED");
+                throw new RuntimeException("Resend API key is not configured");
+            }
 
             String apiUrl = "https://api.resend.com/emails";
 
@@ -191,15 +259,17 @@ public class ResendEmailService {
                 String.class
             );
 
+            System.out.println("📥 Password Reset Response: " + response.getStatusCode() + " - " + response.getBody());
+
             if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("✅ Resend password reset email sent successfully to: " + toEmail);
+                System.out.println("✅ RESEND PASSWORD RESET SUCCESS - Email sent to: " + toEmail);
             } else {
-                System.out.println("❌ Resend password reset email failed. Status: " + response.getStatusCode());
+                System.out.println("❌ RESEND PASSWORD RESET FAILED - Status: " + response.getStatusCode());
                 throw new RuntimeException("Resend API returned: " + response.getStatusCode());
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Resend password reset email failed: " + e.getMessage());
+            System.out.println("💥 RESEND PASSWORD RESET ERROR: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Failed to send password reset email: " + e.getMessage());
         }
