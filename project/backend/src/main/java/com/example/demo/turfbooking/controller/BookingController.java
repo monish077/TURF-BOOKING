@@ -42,7 +42,7 @@ public class BookingController {
 
             Booking savedBooking = bookingService.createBooking(booking);
 
-            // ✅ Send confirmation email automatically (optional)
+            // ✅ Send confirmation email after booking creation
             emailService.sendBookingConfirmationEmail(
                     savedBooking.getUserEmail(),
                     savedBooking.getUserName(),
@@ -112,7 +112,7 @@ public class BookingController {
         }
     }
 
-    // ✅ Send booking confirmation email manually (optional endpoint)
+    // ✅ Send booking confirmation email manually
     @GetMapping("/send-confirmation/{bookingId}")
     public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
         try {
@@ -121,16 +121,21 @@ public class BookingController {
             if (optionalBooking.isPresent()) {
                 Booking booking = optionalBooking.get();
 
+                // ✅ Convert Long -> String properly
                 emailService.sendBookingConfirmationEmail(
                         booking.getUserEmail(),
                         booking.getUserName(),
                         booking.getTurfName(),
                         booking.getDate(),
                         booking.getSlot(),
-                        String.valueOf(booking.getPrice()) // ✅ Ensure String conversion
+                        String.valueOf(booking.getPrice())
                 );
 
-                return ResponseEntity.ok("✅ Booking confirmation email sent.");
+                // ✅ Example of using bookingId safely as String
+                String bookingIdStr = String.valueOf(bookingId);
+                System.out.println("Email sent for booking ID: " + bookingIdStr);
+
+                return ResponseEntity.ok("✅ Booking confirmation email sent for ID: " + bookingIdStr);
             } else {
                 return ResponseEntity.status(404).body("❌ Booking not found for ID: " + bookingId);
             }
@@ -162,7 +167,8 @@ public class BookingController {
     public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
         try {
             bookingService.deleteBooking(id);
-            return ResponseEntity.noContent().build();
+            String idStr = String.valueOf(id); // ✅ Long -> String conversion
+            return ResponseEntity.ok("✅ Booking deleted successfully with ID: " + idStr);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Booking deletion failed for ID: " + id);
