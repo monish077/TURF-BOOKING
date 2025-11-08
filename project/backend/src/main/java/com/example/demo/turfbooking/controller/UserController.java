@@ -34,6 +34,9 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Register a new user
+     */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
@@ -43,20 +46,34 @@ public class UserController {
                     "message", "Registration successful. Please verify your email."
             ));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
+    /**
+     * Verify email token — supports both browser clicks and API calls
+     */
     @GetMapping("/verify")
-    public void verifyEmail(@RequestParam("token") String token, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void verifyEmail(
+            @RequestParam("token") String token,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+
         boolean verified = userService.confirmEmail(token);
+
+        // If called directly from browser (not via fetch)
         String acceptHeader = request.getHeader("Accept");
         boolean isApiRequest = acceptHeader != null && acceptHeader.contains("application/json");
 
         if (isApiRequest) {
+            // API call: return JSON
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":\"" + (verified ? "success" : "error") + "\"}");
+            response.getWriter().write(
+                    "{\"status\":\"" + (verified ? "success" : "error") + "\"}"
+            );
         } else {
+            // Email link click: redirect to frontend page
             if (verified) {
                 response.sendRedirect("https://turf-booking-seven.vercel.app/login");
             } else {
@@ -65,6 +82,9 @@ public class UserController {
         }
     }
 
+    /**
+     * Login user
+     */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -82,6 +102,9 @@ public class UserController {
                 .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or email not verified.")));
     }
 
+    /**
+     * Forgot password
+     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -89,10 +112,14 @@ public class UserController {
             userService.sendPasswordResetLink(email);
             return ResponseEntity.ok(Map.of("message", "Reset link sent to your email."));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
+    /**
+     * Reset password
+     */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
         String token = request.get("token");
@@ -106,12 +133,16 @@ public class UserController {
         }
     }
 
+    /**
+     * Send test email
+     */
     @GetMapping("/test-mail")
     public ResponseEntity<?> sendTestMail() {
         try {
-            emailService.sendTestEmail("monidhoni0007@gmail.com");
+            emailService.sendEmail("monidhoni0007@gmail.com", "Test Email", "This is a test email.");
             return ResponseEntity.ok("Test email sent successfully.");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Failed to send test email: " + e.getMessage());
         }
     }

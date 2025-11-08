@@ -36,7 +36,7 @@ public class BookingController {
             Booking booking = Booking.builder()
                     .userName(request.getUserName())
                     .userEmail(request.getUserEmail())
-                    .turfId(request.getTurfId())
+                    .turfId(request.getTurfId())  // turfId is String here
                     .turfName(request.getTurfName())
                     .date(request.getDate())
                     .slot(request.getSlot())
@@ -112,7 +112,7 @@ public class BookingController {
 
     // Send confirmation email
     @GetMapping("/send-confirmation/{bookingId}")
-    public ResponseEntity<?> sendConfirmationEmail(@PathVariable String bookingId) {  // Changed to String
+    public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(bookingId);
             if (optionalBooking.isPresent()) {
@@ -137,7 +137,7 @@ public class BookingController {
 
     // Get booking by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingById(@PathVariable String id) {  // Changed to String
+    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
             return optionalBooking.<ResponseEntity<?>>map(ResponseEntity::ok)
@@ -150,7 +150,7 @@ public class BookingController {
 
     // Delete booking
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBooking(@PathVariable String id) {  // Changed to String
+    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
         try {
             bookingService.deleteBooking(id);
             return ResponseEntity.noContent().build();

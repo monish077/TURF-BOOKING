@@ -1,122 +1,120 @@
 package com.example.demo.turfbooking.service;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import com.example.demo.turfbooking.entity.User;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class EmailService {
 
-    @Value("${resend.api.key:}")
-    private String resendApiKey;
+    @Autowired
+    private JavaMailSender mailSender;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    // Frontend URL for email links
+    private static final String FRONTEND_URL = "https://turf-booking-seven.vercel.app";
+    // private static final String FRONTEND_URL = "http://localhost:3000"; // For local testing
 
-    // Send verification email
-    public void sendVerificationEmail(String toEmail, String verificationUrl) {
-        String subject = "Verify Your Email - Turf Booking";
-        String htmlContent = getVerificationEmailHtml(verificationUrl);
-        sendEmail(toEmail, subject, htmlContent);
+    // Sender information
+    private static final String SENDER_EMAIL = "monidhoni0007@gmail.com";
+    private static final String SENDER_NAME = "Mars Arena Turf Booking";
+
+    /**
+     * Send verification email during user registration
+     */
+    public void sendVerificationEmail(User user) {
+        String subject = "Verify your email for Turf Booking";
+        String verifyURL = FRONTEND_URL + "/verify-email?token=" + user.getVerificationToken();
+
+        String content = """
+            <p>Hello <strong>%s</strong>,</p>
+            <p>Thanks for registering. Click the link below to verify your email:</p>
+            <p><a href="%s">Verify Now</a></p>
+            <br><p>Regards,<br><strong>Mars Arena Team</strong></p>
+            """.formatted(user.getName(), verifyURL);
+
+        sendHtmlEmail(user.getEmail(), subject, content);
     }
 
-    // Send password reset email
-    public void sendPasswordResetEmail(String toEmail, String resetUrl) {
-        String subject = "Reset Your Password - Turf Booking";
-        String htmlContent = getPasswordResetHtml(resetUrl);
-        sendEmail(toEmail, subject, htmlContent);
+    /**
+     * Send password reset email
+     */
+    public void sendResetPasswordEmail(User user) {
+        String subject = "Reset your password - Turf Booking";
+        String resetURL = FRONTEND_URL + "/reset-password?token=" + user.getResetPasswordToken();
+
+        String content = """
+            <p>Hello <strong>%s</strong>,</p>
+            <p>You requested a password reset. Click below to reset your password:</p>
+            <p><a href="%s">Reset Password</a></p>
+            <br><p>If you didn't request this, you can safely ignore this email.</p>
+            <p>Regards,<br><strong>Mars Arena Team</strong></p>
+            """.formatted(user.getName(), resetURL);
+
+        sendHtmlEmail(user.getEmail(), subject, content);
     }
 
-    // Send test email
-    public void sendTestEmail(String toEmail) {
-        String subject = "✅ Test Email from Turf Booking";
-        String htmlContent = "<p>This is a <strong>test email</strong> from your Turf Booking application using Resend API!</p>";
-        sendEmail(toEmail, subject, htmlContent);
-    }
-
-    // Send booking confirmation email
+    /**
+     * Send booking confirmation email after payment
+     */
     public void sendBookingConfirmationEmail(
             String toEmail,
             String userName,
             String turfName,
             String date,
             String slot,
-            String price) {
+            String price
+    ) {
+        String subject = "✅ Turf Booking Confirmed!";
 
-        String subject = "✅ Your Turf Booking is Confirmed! - Turf Booking";
-        String htmlContent = String.format("""
-                <!DOCTYPE html>
-                <html><body>
-                <h2>Booking Confirmed!</h2>
-                <p>Hello %s,</p>
-                <p>Your turf booking for %s on %s at %s has been confirmed.</p>
-                <p>Amount Paid: ₹%s</p>
-                <p>Thank you for choosing Turf Booking!</p>
-                </body></html>
-                """, userName, turfName, date, slot, price);
+        String content = """
+            <p>Hello <strong>%s</strong>,</p>
+            <p>Your turf booking is confirmed! 🎉</p>
+            <table style='border-collapse: collapse; margin-top: 10px;'>
+                <tr><td><b>Turf:</b></td><td>%s</td></tr>
+                <tr><td><b>Date:</b></td><td>%s</td></tr>
+                <tr><td><b>Slot:</b></td><td>%s</td></tr>
+                <tr><td><b>Price:</b></td><td>₹%s</td></tr>
+            </table>
+            <p>📧 This is your confirmation email. No further action is needed.</p>
+            <br><p>Regards,<br><strong>Mars Arena Team</strong></p>
+            """.formatted(userName, turfName, date, slot, price);
 
-        sendEmail(toEmail, subject, htmlContent);
+        sendHtmlEmail(toEmail, subject, content);
     }
 
-    // Generic method to send email through Resend API
-    public void sendEmail(String toEmail, String subject, String htmlContent) {
+    /**
+     * Shared method to send HTML emails
+     */
+    private void sendHtmlEmail(String to, String subject, String htmlContent) {
         try {
-            if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
-                throw new RuntimeException("Resend API key is not configured");
-            }
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            String apiUrl = "https://api.resend.com/emails";
+            helper.setFrom(SENDER_EMAIL, SENDER_NAME);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
 
-            Map<String, Object> emailRequest = new HashMap<>();
-            emailRequest.put("from", "Turf Booking <onboarding@resend.dev>");
-            emailRequest.put("to", toEmail);
-            emailRequest.put("subject", subject);
-            emailRequest.put("html", htmlContent);
+            mailSender.send(message);
+            System.out.println("✅ Email sent successfully to " + to);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer " + resendApiKey);
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(emailRequest, headers);
-
-            ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.POST, request, String.class);
-
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new RuntimeException("Resend API error: " + response.getBody());
-            }
+        } catch (MessagingException e) {
+            System.err.println("❌ Failed to send email to " + to + ": " + e.getMessage());
+            throw new RuntimeException("Failed to send email to " + to, e);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
+            System.err.println("❌ Unexpected error while sending email: " + e.getMessage());
+            throw new RuntimeException("Unexpected error while sending email", e);
         }
     }
 
-    private String getVerificationEmailHtml(String verificationUrl) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <body>
-                <h2>Welcome to Turf Booking!</h2>
-                <p>Please verify your email by clicking the link below:</p>
-                <p><a href="%s">Verify Email</a></p>
-                <p>If you cannot click, copy paste this URL: %s</p>
-                </body>
-                </html>
-                """.formatted(verificationUrl, verificationUrl);
-    }
-
-    private String getPasswordResetHtml(String resetUrl) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <body>
-                <h2>Password Reset Request</h2>
-                <p>Reset your password by clicking below:</p>
-                <p><a href="%s">Reset Password</a></p>
-                <p>If you cannot click, copy paste this URL: %s</p>
-                </body>
-                </html>
-                """.formatted(resetUrl, resetUrl);
+    /**
+     * Backup plain method to send email
+     */
+    public void sendEmail(String to, String subject, String content) {
+        sendHtmlEmail(to, subject, content);
     }
 }
