@@ -1,68 +1,77 @@
 package com.example.demo.turfbooking.controller;
 
+import com.example.demo.turfbooking.service.ResendEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/email") // More specific route for all email actions
 public class EmailTestController {
 
     @Autowired
-    private JavaMailSender mailSender;
+    private ResendEmailService resendEmailService;
 
     /**
      * Simple test email endpoint
-     * Usage: GET /api/test-email
+     * Usage: GET /api/email/test-email
      */
     @GetMapping("/test-email")
-    public String testEmail() {
+    public ResponseEntity<String> testEmail() {
+        String recipient = "monidhoni0007@gmail.com";
         try {
-            System.out.println("🚀 TEST: Attempting to send test email...");
-            
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo("monidhoni0007@gmail.com");
-            message.setSubject("✅ Test Email from Turf Booking");
-            message.setText("This is a test email from your Turf Booking application. If you receive this, email service is working!");
-            message.setFrom("monidhoni0007@gmail.com");
-            
-            mailSender.send(message);
-            System.out.println("✅ TEST: Email sent successfully!");
-            
-            return "✅ Test email sent successfully to monidhoni0007@gmail.com! Check your inbox.";
-            
+            resendEmailService.sendTestEmail(recipient);
+            return ResponseEntity.ok("✅ Test email sent successfully to " + recipient + "! Check your inbox.");
         } catch (Exception e) {
-            System.out.println("❌ TEST: Email failed: " + e.getMessage());
-            e.printStackTrace();
-            return "❌ Email test failed: " + e.getMessage();
+            return ResponseEntity.status(500).body("❌ Email test failed: " + e.getMessage());
         }
     }
 
     /**
      * Test email with custom recipient
-     * Usage: GET /api/test-email-custom?email=your@email.com
+     * Usage: GET /api/email/test-email-custom?email=your@email.com
      */
     @GetMapping("/test-email-custom")
-    public String testEmailCustom(@RequestParam String email) {
+    public ResponseEntity<String> testEmailCustom(@RequestParam String email) {
         try {
-            System.out.println("🚀 TEST: Attempting to send test email to: " + email);
-            
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email);
-            message.setSubject("✅ Test Email from Turf Booking");
-            message.setText("This is a test email from your Turf Booking application. If you receive this, email service is working!");
-            message.setFrom("monidhoni0007@gmail.com");
-            
-            mailSender.send(message);
-            System.out.println("✅ TEST: Email sent successfully to: " + email);
-            
-            return "✅ Test email sent successfully to " + email + "! Check your inbox.";
-            
+            resendEmailService.sendTestEmail(email);
+            return ResponseEntity.ok("✅ Test email sent successfully to " + email + "! Check your inbox.");
         } catch (Exception e) {
-            System.out.println("❌ TEST: Email failed: " + e.getMessage());
-            e.printStackTrace();
-            return "❌ Email test failed: " + e.getMessage();
+            return ResponseEntity.status(500).body("❌ Email test failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Resend verification email
+     * Usage: POST /api/email/resend-verification?email=...&verificationUrl=...
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerificationEmail(
+            @RequestParam String email,
+            @RequestParam String verificationUrl
+    ) {
+        try {
+            resendEmailService.sendVerificationEmail(email, verificationUrl);
+            return ResponseEntity.ok("✅ Verification email sent successfully to " + email + "!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("❌ Verification email failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Send password reset email
+     * Usage: POST /api/email/send-password-reset?email=...&resetUrl=...
+     */
+    @PostMapping("/send-password-reset")
+    public ResponseEntity<String> sendPasswordResetEmail(
+            @RequestParam String email,
+            @RequestParam String resetUrl
+    ) {
+        try {
+            resendEmailService.sendPasswordResetEmail(email, resetUrl);
+            return ResponseEntity.ok("✅ Password reset email sent successfully to " + email + "!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("❌ Password reset email failed: " + e.getMessage());
         }
     }
 }
