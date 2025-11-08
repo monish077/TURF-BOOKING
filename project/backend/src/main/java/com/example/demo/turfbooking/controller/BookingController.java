@@ -107,7 +107,7 @@ public class BookingController {
                         booking.getTurfName(),
                         booking.getDate(),
                         booking.getSlot(),
-                        String.valueOf(booking.getPrice()) // ✅ Fix Long → String
+                        String.valueOf(booking.getPrice()) // ✅ Fixed Long → String
                 );
                 return ResponseEntity.ok("✅ Booking confirmation email sent for booking ID: " + bookingId);
             } else {
@@ -123,11 +123,14 @@ public class BookingController {
     public ResponseEntity<?> getBookingById(@PathVariable Long id) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
-            return optionalBooking.map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(404).body("❌ Booking not found for ID: " + id));
+            if (optionalBooking.isPresent()) {
+                return ResponseEntity.ok(optionalBooking.get());
+            } else {
+                return ResponseEntity.status(404).body("❌ Booking not found for ID: " + id);
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("❌ Failed to fetch booking by ID");
+            return ResponseEntity.status(500).body("❌ Failed to fetch booking by ID: " + id);
         }
     }
 
