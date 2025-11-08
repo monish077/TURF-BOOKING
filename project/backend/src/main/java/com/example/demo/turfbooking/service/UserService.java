@@ -6,6 +6,7 @@ import com.example.demo.turfbooking.jwt.JwtUtil;
 import com.example.demo.turfbooking.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +21,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final ResendEmailService resendEmailService; // ✅ ADDED Resend service
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.base-url:https://turf-booking-pp67.onrender.com}")
+    private String baseUrl;
 
     /**
      * Registers a new user with encoded password, disabled status, and verification token.
@@ -64,13 +69,21 @@ public class UserService {
             User savedUser = userRepository.save(user);
             log.info("✅ User registered successfully: {}", savedUser.getEmail());
 
-            // Send verification email
+            // Send verification email using Resend
             try {
-                emailService.sendVerificationEmail(savedUser);
-                log.info("📧 Verification email sent to: {}", savedUser.getEmail());
+                String verificationUrl = baseUrl + "/api/users/verify?token=" + savedUser.getVerificationToken();
+                resendEmailService.sendVerificationEmail(savedUser.getEmail(), verificationUrl);
+                log.info("📧 Resend verification email sent to: {}", savedUser.getEmail());
             } catch (Exception e) {
-                log.error("❌ Failed to send verification email to {}: {}", savedUser.getEmail(), e.getMessage());
-                // Don't throw exception here - user is created, they can request another verification email
+                log.error("❌ Failed to send Resend verification email to {}: {}", savedUser.getEmail(), e.getMessage());
+                // Fallback to SMTP if Resend fails
+                try {
+                    emailService.sendVerificationEmail(savedUser);
+                    log.info("📧 Fallback SMTP verification email sent to: {}", savedUser.getEmail());
+                } catch (Exception smtpException) {
+                    log.error("❌ Both Resend and SMTP email failed for {}: {}", savedUser.getEmail(), smtpException.getMessage());
+                    // Don't throw exception here - user is created, they can request another verification email
+                }
             }
 
             return savedUser;
@@ -187,11 +200,20 @@ public class UserService {
                 log.info("✅ Password reset token generated for: {}", email);
 
                 try {
-                    emailService.sendResetPasswordEmail(user);
-                    log.info("📧 Password reset email sent to: {}", email);
+                    // Use Resend for password reset emails
+                    String resetUrl = baseUrl + "/reset-password?token=" + user.getResetPasswordToken();
+                    resendEmailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+                    log.info("📧 Resend password reset email sent to: {}", email);
                 } catch (Exception e) {
-                    log.error("❌ Failed to send password reset email to {}: {}", email, e.getMessage());
-                    throw new RuntimeException("Failed to send password reset email. Please try again.");
+                    log.error("❌ Failed to send Resend password reset email to {}: {}", email, e.getMessage());
+                    // Fallback to SMTP
+                    try {
+                        emailService.sendResetPasswordEmail(user);
+                        log.info("📧 Fallback SMTP password reset email sent to: {}", email);
+                    } catch (Exception smtpException) {
+                        log.error("❌ Both Resend and SMTP password reset email failed for {}: {}", email, smtpException.getMessage());
+                        throw new RuntimeException("Failed to send password reset email. Please try again.");
+                    }
                 }
             } else {
                 log.warn("❌ No account found with email: {}", email);
@@ -286,9 +308,10 @@ public class UserService {
                 user.setVerificationToken(UUID.randomUUID().toString());
                 userRepository.save(user);
                 
-                // Send verification email
-                emailService.sendVerificationEmail(user);
-                log.info("✅ Verification email resent to: {}", email);
+                // Send verification email using Resend
+                String verificationUrl = baseUrl + "/api/users/verify?token=" + user.getVerificationToken();
+                resendEmailService.sendVerificationEmail(user.getEmail(), verificationUrl);
+                log.info("✅ Resend verification email resent to: {}", email);
                 return true;
             } else {
                 log.warn("❌ User not found for verification resend: {}", email);
