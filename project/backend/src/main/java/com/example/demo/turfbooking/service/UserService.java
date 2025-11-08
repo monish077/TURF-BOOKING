@@ -26,10 +26,6 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    /**
-     * Registers a new user with an encoded password, disabled status, and verification token.
-     * Sends a verification email after saving the user.
-     */
     public User registerUser(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email is already registered: " + user.getEmail());
@@ -38,7 +34,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setEnabled(false);
         user.setVerificationToken(UUID.randomUUID().toString());
-
         if (user.getRole() == null) {
             user.setRole(Role.USER);
         }
@@ -46,7 +41,6 @@ public class UserService {
         User savedUser = userRepository.save(user);
         System.out.println("[REGISTER] New user registered: " + savedUser.getEmail());
 
-        // Send verification email
         try {
             emailService.sendVerificationEmail(savedUser);
         } catch (Exception e) {
@@ -56,10 +50,6 @@ public class UserService {
         return savedUser;
     }
 
-    /**
-     * Confirms the user email based on the verification token.
-     * Enables the user account if the token is valid.
-     */
     public boolean confirmEmail(String token) {
         if (token == null || token.trim().isEmpty()) {
             System.out.println("[VERIFY] Missing or empty token");
@@ -77,17 +67,12 @@ public class UserService {
                         System.out.println("[VERIFY] User already verified: " + user.getEmail());
                     }
                     return true;
-                })
-                .orElseGet(() -> {
+                }).orElseGet(() -> {
                     System.out.println("[VERIFY] Invalid verification token: " + token);
                     return false;
                 });
     }
 
-    /**
-     * Authenticates user by email and password.
-     * Throws an error if email not verified.
-     */
     public Optional<User> loginUser(String email, String rawPassword) {
         return userRepository.findByEmail(email)
                 .filter(user -> {
@@ -102,35 +87,26 @@ public class UserService {
                 });
     }
 
-    /**
-     * Sends password reset link by generating a reset token and emailing it.
-     */
     public void sendPasswordResetLink(String email) {
         userRepository.findByEmail(email).ifPresentOrElse(user -> {
             user.setResetPasswordToken(UUID.randomUUID().toString());
             userRepository.save(user);
             System.out.println("[RESET] Sending password reset link to: " + email);
-
             try {
                 emailService.sendResetPasswordEmail(user);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to send password reset email.");
             }
-
         }, () -> {
             throw new RuntimeException("No account found with that email: " + email);
         });
     }
 
-    /**
-     * Resets the password given a valid reset token and new password.
-     */
     public boolean resetPassword(String token, String newPassword) {
         if (token == null || token.trim().isEmpty()) {
             System.out.println("[RESET] Missing reset token");
             return false;
         }
-
         return userRepository.findByResetPasswordToken(token)
                 .map(user -> {
                     user.setPassword(passwordEncoder.encode(newPassword));
@@ -138,7 +114,6 @@ public class UserService {
                     userRepository.save(user);
                     System.out.println("[RESET] Password reset for: " + user.getEmail());
                     return true;
-                })
-                .orElse(false);
+                }).orElse(false);
     }
 }

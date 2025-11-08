@@ -5,7 +5,6 @@ import com.example.demo.turfbooking.entity.Booking;
 import com.example.demo.turfbooking.service.BookingService;
 import com.example.demo.turfbooking.service.EmailService;
 import com.example.demo.turfbooking.jwt.JwtUtil;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,14 +26,13 @@ public class BookingController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Create a new booking
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         try {
             Booking booking = Booking.builder()
                     .userName(request.getUserName())
                     .userEmail(request.getUserEmail())
-                    .turfId(request.getTurfId())  // keep as String or update accordingly
+                    .turfId(request.getTurfId())
                     .turfName(request.getTurfName())
                     .date(request.getDate())
                     .slot(request.getSlot())
@@ -50,7 +48,6 @@ public class BookingController {
         }
     }
 
-    // Secure: Get bookings for admin’s turfs using JWT
     @GetMapping("/admin")
     public ResponseEntity<?> getBookingsForAdminTurfs(HttpServletRequest request) {
         try {
@@ -70,7 +67,6 @@ public class BookingController {
         }
     }
 
-    // Get all bookings
     @GetMapping("/all")
     public ResponseEntity<?> getAllBookings() {
         try {
@@ -82,7 +78,6 @@ public class BookingController {
         }
     }
 
-    // Get bookings by user email
     @GetMapping("/user/{email}")
     public ResponseEntity<?> getBookingsByUserEmail(@PathVariable String email) {
         try {
@@ -94,7 +89,6 @@ public class BookingController {
         }
     }
 
-    // Get bookings by turf ID
     @GetMapping("/turf/{turfId}")
     public ResponseEntity<?> getBookingsByTurfId(@PathVariable String turfId) {
         try {
@@ -106,7 +100,6 @@ public class BookingController {
         }
     }
 
-    // Send confirmation email
     @GetMapping("/send-confirmation/{bookingId}")
     public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
         try {
@@ -131,12 +124,11 @@ public class BookingController {
         }
     }
 
-    // Get booking by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getBookingById(@PathVariable Long id) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
-            return optionalBooking.<ResponseEntity<?>>map(ResponseEntity::ok)
+            return optionalBooking.map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.status(404).body("❌ Booking not found for ID: " + id));
         } catch (Exception e) {
             e.printStackTrace();
@@ -144,7 +136,6 @@ public class BookingController {
         }
     }
 
-    // Delete booking
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
         try {
