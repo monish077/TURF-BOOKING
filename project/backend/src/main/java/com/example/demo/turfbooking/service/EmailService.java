@@ -37,6 +37,30 @@ public class EmailService {
         sendEmail(toEmail, subject, htmlContent);
     }
 
+    // Send booking confirmation email
+    public void sendBookingConfirmationEmail(
+            String toEmail,
+            String userName,
+            String turfName,
+            String date,
+            String slot,
+            String price) {
+
+        String subject = "✅ Your Turf Booking is Confirmed! - Turf Booking";
+        String htmlContent = String.format("""
+                <!DOCTYPE html>
+                <html><body>
+                <h2>Booking Confirmed!</h2>
+                <p>Hello %s,</p>
+                <p>Your turf booking for %s on %s at %s has been confirmed.</p>
+                <p>Amount Paid: ₹%s</p>
+                <p>Thank you for choosing Turf Booking!</p>
+                </body></html>
+                """, userName, turfName, date, slot, price);
+
+        sendEmail(toEmail, subject, htmlContent);
+    }
+
     // Generic method to send email through Resend API
     public void sendEmail(String toEmail, String subject, String htmlContent) {
         try {

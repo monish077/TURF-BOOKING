@@ -21,22 +21,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final EmailService emailService;
-    private final ResendEmailService resendEmailService; // ✅ ADDED Resend service
+    private final ResendEmailService resendEmailService; // Using Resend API email service
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.base-url:https://turf-booking-pp67.onrender.com}")
     private String baseUrl;
 
-    /**
-     * Registers a new user with encoded password, disabled status, and verification token.
-     * Sends verification email after saving user.
-     */
     @Transactional
     public User registerUser(User user) {
         log.info("🔐 Attempting to register user with email: {}", user.getEmail());
-        
-        // Validate input
+
         if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
             throw new RuntimeException("Email is required");
         }
@@ -47,14 +42,12 @@ public class UserService {
             throw new RuntimeException("Name is required");
         }
 
-        // Check if user already exists
         if (userRepository.existsByEmail(user.getEmail().trim().toLowerCase())) {
             log.warn("❌ Email already registered: {}", user.getEmail());
             throw new RuntimeException("Email is already registered: " + user.getEmail());
         }
 
         try {
-            // Set user properties
             user.setEmail(user.getEmail().trim().toLowerCase());
             user.setName(user.getName().trim());
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -65,27 +58,25 @@ public class UserService {
                 user.setRole(Role.USER);
             }
 
-            // Save user
             User savedUser = userRepository.save(user);
             log.info("✅ User registered successfully: {}", savedUser.getEmail());
 
-            // Send verification email using Resend
+            String verificationUrl = baseUrl + "/api/users/verify?token=" + savedUser.getVerificationToken();
+
+            // Attempt email via Resend API first
             try {
-                String verificationUrl = baseUrl + "/api/users/verify?token=" + savedUser.getVerificationToken();
                 resendEmailService.sendVerificationEmail(savedUser.getEmail(), verificationUrl);
                 log.info("📧 Resend verification email sent to: {}", savedUser.getEmail());
             } catch (Exception e) {
-                log.error("❌ Failed to send Resend verification email to {}: {}", savedUser.getEmail(), e.getMessage());
-                // Fallback to SMTP if Resend fails
+                log.error("❌ Failed Resend email to {}: {}", savedUser.getEmail(), e.getMessage());
+                // Fallback to SMTP email
                 try {
-                    emailService.sendVerificationEmail(savedUser);
-                    log.info("📧 Fallback SMTP verification email sent to: {}", savedUser.getEmail());
-                } catch (Exception smtpException) {
-                    log.error("❌ Both Resend and SMTP email failed for {}: {}", savedUser.getEmail(), smtpException.getMessage());
-                    // Don't throw exception here - user is created, they can request another verification email
+                    emailService.sendVerificationEmail(savedUser.getEmail(), verificationUrl);
+                    log.info("📧 Fallback SMTP email sent to: {}", savedUser.getEmail());
+                } catch (Exception smtpEx) {
+                    log.error("❌ Both Resend and SMTP email failed for {}: {}", savedUser.getEmail(), smtpEx.getMessage());
                 }
             }
-
             return savedUser;
 
         } catch (Exception e) {
@@ -94,14 +85,10 @@ public class UserService {
         }
     }
 
-    /**
-     * Confirms user email based on verification token.
-     * Enables user account if token is valid.
-     */
     @Transactional
     public boolean confirmEmail(String token) {
         log.info("🔍 Attempting email verification with token: {}", token);
-        
+
         if (token == null || token.trim().isEmpty()) {
             log.warn("❌ Missing or empty verification token");
             return false;
@@ -109,20 +96,17 @@ public class UserService {
 
         try {
             Optional<User> userOpt = userRepository.findByVerificationToken(token.trim());
-            
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                
                 if (!user.isEnabled()) {
                     user.setEnabled(true);
-                    user.setVerificationToken(null); // Clear the token after verification
+                    user.setVerificationToken(null);
                     userRepository.save(user);
                     log.info("✅ Email verified successfully for: {}", user.getEmail());
-                    return true;
                 } else {
                     log.info("ℹ️ User already verified: {}", user.getEmail());
-                    return true; // Already verified
                 }
+                return true;
             } else {
                 log.warn("❌ Invalid verification token: {}", token);
                 return false;
@@ -133,12 +117,9 @@ public class UserService {
         }
     }
 
-    /**
-     * Authenticates user by email and password, enforcing email verification.
-     */
     public Optional<User> loginUser(String email, String rawPassword) {
         log.info("🔐 Attempting login for email: {}", email);
-        
+
         if (email == null || rawPassword == null) {
             log.warn("❌ Login attempt with null email or password");
             return Optional.empty();
@@ -146,19 +127,14 @@ public class UserService {
 
         try {
             Optional<User> userOpt = userRepository.findByEmail(email.trim().toLowerCase());
-            
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                
-                // Check if email is verified
                 if (!user.isEnabled()) {
-                    log.warn("❌ Login attempt for unverified email: {}", email);
-                    throw new RuntimeException("Please verify your email before logging in. Check your inbox for verification link.");
+                    log.warn("❌ Login for unverified email: {}", email);
+                    throw new RuntimeException("Please verify your email before logging in.");
                 }
 
-                // Check password
-                boolean passwordMatches = passwordEncoder.matches(rawPassword, user.getPassword());
-                if (passwordMatches) {
+                if (passwordEncoder.matches(rawPassword, user.getPassword())) {
                     log.info("✅ Login successful for: {}", email);
                     return Optional.of(user);
                 } else {
@@ -167,54 +143,48 @@ public class UserService {
             } else {
                 log.warn("❌ User not found for email: {}", email);
             }
-            
             return Optional.empty();
-            
+
         } catch (RuntimeException e) {
-            throw e; // Re-throw verification exceptions
+            throw e;
         } catch (Exception e) {
             log.error("❌ Error during login for {}: {}", email, e.getMessage());
             return Optional.empty();
         }
     }
 
-    /**
-     * Sends password reset email link to user.
-     */
     @Transactional
     public void sendPasswordResetLink(String email) {
-        log.info("🔑 Requesting password reset for email: {}", email);
-        
+        log.info("🔑 Password reset requested for email: {}", email);
+
         if (email == null || email.trim().isEmpty()) {
             throw new RuntimeException("Email is required");
         }
 
         try {
             Optional<User> userOpt = userRepository.findByEmail(email.trim().toLowerCase());
-            
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
                 user.setResetPasswordToken(UUID.randomUUID().toString());
                 userRepository.save(user);
-                
                 log.info("✅ Password reset token generated for: {}", email);
 
+                String resetUrl = baseUrl + "/reset-password?token=" + user.getResetPasswordToken();
+
                 try {
-                    // Use Resend for password reset emails
-                    String resetUrl = baseUrl + "/reset-password?token=" + user.getResetPasswordToken();
                     resendEmailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
                     log.info("📧 Resend password reset email sent to: {}", email);
                 } catch (Exception e) {
-                    log.error("❌ Failed to send Resend password reset email to {}: {}", email, e.getMessage());
-                    // Fallback to SMTP
+                    log.error("❌ Resend password reset email failed for {}: {}", email, e.getMessage());
                     try {
-                        emailService.sendResetPasswordEmail(user);
-                        log.info("📧 Fallback SMTP password reset email sent to: {}", email);
-                    } catch (Exception smtpException) {
-                        log.error("❌ Both Resend and SMTP password reset email failed for {}: {}", email, smtpException.getMessage());
-                        throw new RuntimeException("Failed to send password reset email. Please try again.");
+                        emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+                        log.info("📧 SMTP password reset email sent to: {}", email);
+                    } catch (Exception smtpEx) {
+                        log.error("❌ Both Resend and SMTP password reset email failed for {}: {}", email, smtpEx.getMessage());
+                        throw new RuntimeException("Password reset email failed. Please try again.");
                     }
                 }
+
             } else {
                 log.warn("❌ No account found with email: {}", email);
                 throw new RuntimeException("No account found with this email address.");
@@ -222,23 +192,19 @@ public class UserService {
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ Error during password reset request for {}: {}", email, e.getMessage());
+            log.error("❌ Password reset error for {}: {}", email, e.getMessage());
             throw new RuntimeException("Password reset request failed. Please try again.");
         }
     }
 
-    /**
-     * Resets user's password if valid reset token provided.
-     */
     @Transactional
     public boolean resetPassword(String token, String newPassword) {
-        log.info("🔑 Attempting password reset with token");
-        
+        log.info("🔑 Password reset attempt with token");
+
         if (token == null || token.trim().isEmpty()) {
             log.warn("❌ Missing reset token");
             return false;
         }
-        
         if (newPassword == null || newPassword.trim().isEmpty()) {
             log.warn("❌ New password is required");
             return false;
@@ -246,13 +212,11 @@ public class UserService {
 
         try {
             Optional<User> userOpt = userRepository.findByResetPasswordToken(token.trim());
-            
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
                 user.setPassword(passwordEncoder.encode(newPassword.trim()));
-                user.setResetPasswordToken(null); // Clear the token after use
+                user.setResetPasswordToken(null);
                 userRepository.save(user);
-                
                 log.info("✅ Password reset successful for: {}", user.getEmail());
                 return true;
             } else {
@@ -260,55 +224,38 @@ public class UserService {
                 return false;
             }
         } catch (Exception e) {
-            log.error("❌ Error during password reset: {}", e.getMessage());
+            log.error("❌ Password reset error: {}", e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Find user by email (utility method)
-     */
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email.trim().toLowerCase());
     }
 
-    /**
-     * Find user by ID (utility method)
-     */
     public Optional<User> findById(String id) {
         return userRepository.findById(id);
     }
 
-    /**
-     * Check if email exists (utility method)
-     */
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email.trim().toLowerCase());
     }
 
-    /**
-     * Resend verification email
-     */
     @Transactional
     public boolean resendVerificationEmail(String email) {
         log.info("📧 Resending verification email to: {}", email);
-        
+
         try {
             Optional<User> userOpt = userRepository.findByEmail(email.trim().toLowerCase());
-            
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
-                
                 if (user.isEnabled()) {
                     log.info("ℹ️ User already verified: {}", email);
                     return true;
                 }
-                
-                // Generate new verification token
                 user.setVerificationToken(UUID.randomUUID().toString());
                 userRepository.save(user);
-                
-                // Send verification email using Resend
+
                 String verificationUrl = baseUrl + "/api/users/verify?token=" + user.getVerificationToken();
                 resendEmailService.sendVerificationEmail(user.getEmail(), verificationUrl);
                 log.info("✅ Resend verification email resent to: {}", email);
@@ -318,7 +265,7 @@ public class UserService {
                 return false;
             }
         } catch (Exception e) {
-            log.error("❌ Error resending verification email to {}: {}", email, e.getMessage());
+            log.error("❌ Verification resend error for {}: {}", email, e.getMessage());
             return false;
         }
     }

@@ -16,12 +16,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(
-    origins = {
-        "https://turf-booking-frontend.vercel.app",
-        "https://turf-booking-seven.vercel.app",
-        "http://localhost:3000"
-    },
-    allowCredentials = "true"
+        origins = {
+                "https://turf-booking-frontend.vercel.app",
+                "https://turf-booking-seven.vercel.app",
+                "http://localhost:3000"
+        },
+        allowCredentials = "true"
 )
 public class UserController {
 
@@ -34,45 +34,28 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /**
-     * Register a new user
-     */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
-        System.out.println("[CONTROLLER] Registration request for: " + user.getEmail());
         try {
             User newUser = userService.registerUser(user);
-            System.out.println("[CONTROLLER] Registration successful for: " + newUser.getEmail());
             return ResponseEntity.status(201).body(Map.of(
-                "email", newUser.getEmail(),
-                "message", "Registration successful. Please verify your email."
+                    "email", newUser.getEmail(),
+                    "message", "Registration successful. Please verify your email."
             ));
         } catch (Exception e) {
-            System.out.println("[CONTROLLER] Registration failed: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    /**
-     * Verify email token — supports both browser clicks and API calls
-     */
     @GetMapping("/verify")
-    public void verifyEmail(
-        @RequestParam("token") String token,
-        HttpServletRequest request,
-        HttpServletResponse response
-    ) throws IOException {
+    public void verifyEmail(@RequestParam("token") String token, HttpServletRequest request, HttpServletResponse response) throws IOException {
         boolean verified = userService.confirmEmail(token);
-
         String acceptHeader = request.getHeader("Accept");
         boolean isApiRequest = acceptHeader != null && acceptHeader.contains("application/json");
 
         if (isApiRequest) {
             response.setContentType("application/json");
-            response.getWriter().write(
-                "{\"status\":\"" + (verified ? "success" : "error") + "\"}"
-            );
+            response.getWriter().write("{\"status\":\"" + (verified ? "success" : "error") + "\"}");
         } else {
             if (verified) {
                 response.sendRedirect("https://turf-booking-seven.vercel.app/login");
@@ -82,29 +65,23 @@ public class UserController {
         }
     }
 
-    /**
-     * Login user
-     */
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String password = request.get("password");
 
         return userService.loginUser(email, password)
-            .map(user -> {
-                String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-                return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "role", user.getRole(),
-                    "email", user.getEmail()
-                ));
-            })
-            .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or email not verified.")));
+                .map(user -> {
+                    String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+                    return ResponseEntity.ok(Map.of(
+                            "token", token,
+                            "role", user.getRole(),
+                            "email", user.getEmail()
+                    ));
+                })
+                .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or email not verified.")));
     }
 
-    /**
-     * Forgot password
-     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -112,15 +89,10 @@ public class UserController {
             userService.sendPasswordResetLink(email);
             return ResponseEntity.ok(Map.of("message", "Reset link sent to your email."));
         } catch (Exception e) {
-            System.out.println("[CONTROLLER] Forgot password failed: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    /**
-     * Reset password
-     */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
         String token = request.get("token");
@@ -134,17 +106,12 @@ public class UserController {
         }
     }
 
-    /**
-     * Send test email
-     */
     @GetMapping("/test-mail")
     public ResponseEntity<?> sendTestMail() {
         try {
-            emailService.sendEmail("monidhoni0007@gmail.com", "Test Email", "This is a test email.");
+            emailService.sendTestEmail("monidhoni0007@gmail.com");
             return ResponseEntity.ok("Test email sent successfully.");
         } catch (Exception e) {
-            System.out.println("[CONTROLLER] Test email failed: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(500).body("Failed to send test email: " + e.getMessage());
         }
     }

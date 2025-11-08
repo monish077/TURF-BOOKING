@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/test")
 @CrossOrigin(origins = {
-    "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",
-    "http://localhost:3000"
+        "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",
+        "http://localhost:3000"
 }, allowCredentials = "true")
 public class EmailTestController {
 
@@ -21,7 +21,6 @@ public class EmailTestController {
         System.out.println("✅ EmailTestController loaded. Ready to send emails.");
     }
 
-    // Test email endpoint
     @GetMapping("/send")
     public String sendTestEmail() {
         try {
@@ -33,7 +32,6 @@ public class EmailTestController {
         }
     }
 
-    // Send verification email with query param `email` and `verificationUrl`
     @PostMapping("/sendVerification")
     public String sendVerificationEmail(
             @RequestParam String email,
@@ -47,7 +45,6 @@ public class EmailTestController {
         }
     }
 
-    // Send password reset email with params `email` and `resetUrl`
     @PostMapping("/sendPasswordReset")
     public String sendPasswordResetEmail(
             @RequestParam String email,
