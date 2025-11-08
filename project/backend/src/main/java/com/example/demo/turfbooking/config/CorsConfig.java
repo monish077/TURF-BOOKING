@@ -10,51 +10,45 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    private static final List<String> ALLOWED_ORIGINS = Arrays.asList(
-        "https://turf-booking-seven.vercel.app",   
-        "https://turf-booking-frontend.vercel.app", 
-        "https://turf-booking-*.vercel.app",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080"
-    );
-
-    private static final List<String> ALLOWED_METHODS = Arrays.asList(
-        "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
-    );
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(ALLOWED_ORIGINS);
-        config.setAllowedMethods(ALLOWED_METHODS);
-        config.setAllowedHeaders(Arrays.asList("*"));
-        config.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
-        config.setAllowCredentials(true);
-        config.setMaxAge(3600L);
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Use allowedOriginPatterns for more flexibility
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "https://turf-booking-seven.vercel.app",
+            "https://turf-booking-frontend.vercel.app",
+            "https://turf-booking-*.vercel.app",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173"
+        ));
+        
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
+        ));
+        
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "Access-Control-Allow-Origin", 
+            "Access-Control-Allow-Credentials"
+        ));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns(ALLOWED_ORIGINS.toArray(new String[0]))
-                .allowedMethods(ALLOWED_METHODS.toArray(new String[0]))
-                .allowedHeaders("*")
-                .exposedHeaders("Authorization", "Content-Type")
-                .allowCredentials(true)
-                .maxAge(3600L);
+        // This method can be empty since we're using the bean approach
+        // Or you can remove the bean and use this method instead
     }
 
     @Override

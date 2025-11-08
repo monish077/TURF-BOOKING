@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -33,11 +34,14 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
+    @Autowired
+    private CorsConfigurationSource corsConfigurationSource;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // ✅ Enable CORS (will use CorsConfig class)
-            .cors(cors -> {})
+            // ✅ Enable CORS with our custom configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             
             // ❌ Disable CSRF because we use JWT (stateless)
             .csrf(csrf -> csrf.disable())
