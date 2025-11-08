@@ -16,18 +16,9 @@ public class ResendEmailService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // Add initialization logging
-    @PostConstruct
-    public void init() {
-        System.out.println("🔑 === RESEND SERVICE INITIALIZATION ===");
-        System.out.println("Resend API Key configured: " + (resendApiKey != null));
-        if (resendApiKey != null) {
-            System.out.println("API Key length: " + resendApiKey.length());
-            System.out.println("API Key starts with: " + resendApiKey.substring(0, Math.min(8, resendApiKey.length())) + "...");
-        } else {
-            System.out.println("❌ RESEND API KEY IS NULL - Check environment variable RESEND_API_KEY");
-        }
-        System.out.println("🏁 === RESEND SERVICE INITIALIZATION COMPLETE ===");
+    // Simple initialization without @PostConstruct
+    public ResendEmailService() {
+        System.out.println("🔑 === RESEND SERVICE CREATED ===");
     }
 
     public void sendVerificationEmail(String toEmail, String verificationUrl) {
@@ -36,10 +27,11 @@ public class ResendEmailService {
             System.out.println("📧 Recipient: " + toEmail);
             System.out.println("🔗 Verification URL: " + verificationUrl);
             
-            // Validate API key
+            // Validate API key on first use
+            logApiKeyStatus();
+            
             if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
                 System.out.println("❌ CRITICAL: RESEND API KEY IS MISSING OR EMPTY");
-                System.out.println("Please set RESEND_API_KEY environment variable in Render");
                 throw new RuntimeException("Resend API key is not configured");
             }
             
@@ -113,7 +105,6 @@ public class ResendEmailService {
             System.out.println("📥 === RESEND API RESPONSE ===");
             System.out.println("Status Code: " + response.getStatusCode());
             System.out.println("Response Body: " + response.getBody());
-            System.out.println("Response Headers: " + response.getHeaders());
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 System.out.println("✅ RESEND SUCCESS - Email sent successfully to: " + toEmail);
@@ -130,7 +121,6 @@ public class ResendEmailService {
             System.out.println("💥 RESEND VERIFICATION EMAIL ERROR ===");
             System.out.println("Error Type: " + e.getClass().getSimpleName());
             System.out.println("Error Message: " + e.getMessage());
-            System.out.println("Stack Trace:");
             e.printStackTrace();
             System.out.println("💥 === RESEND VERIFICATION EMAIL ERROR END ===");
             throw new RuntimeException("Failed to send verification email via Resend: " + e.getMessage());
@@ -142,7 +132,9 @@ public class ResendEmailService {
             System.out.println("🚀 === RESEND TEST EMAIL START ===");
             System.out.println("📧 Test Recipient: " + toEmail);
             
-            // Validate API key
+            // Log API key status
+            logApiKeyStatus();
+            
             if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
                 System.out.println("❌ RESEND API KEY NOT CONFIGURED");
                 return;
@@ -198,7 +190,9 @@ public class ResendEmailService {
             System.out.println("📧 Recipient: " + toEmail);
             System.out.println("🔗 Reset URL: " + resetUrl);
             
-            // Validate API key
+            // Log API key status
+            logApiKeyStatus();
+            
             if (resendApiKey == null || resendApiKey.trim().isEmpty()) {
                 System.out.println("❌ RESEND API KEY NOT CONFIGURED");
                 throw new RuntimeException("Resend API key is not configured");
@@ -273,5 +267,18 @@ public class ResendEmailService {
             e.printStackTrace();
             throw new RuntimeException("Failed to send password reset email: " + e.getMessage());
         }
+    }
+
+    // Helper method to log API key status
+    private void logApiKeyStatus() {
+        System.out.println("🔑 === RESEND API KEY STATUS ===");
+        System.out.println("API Key configured: " + (resendApiKey != null));
+        if (resendApiKey != null) {
+            System.out.println("API Key length: " + resendApiKey.length());
+            System.out.println("API Key starts with: " + resendApiKey.substring(0, Math.min(8, resendApiKey.length())) + "...");
+        } else {
+            System.out.println("❌ RESEND API KEY IS NULL - Check environment variable RESEND_API_KEY");
+        }
+        System.out.println("🔑 === RESEND API KEY STATUS END ===");
     }
 }
