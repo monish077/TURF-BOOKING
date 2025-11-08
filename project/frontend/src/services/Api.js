@@ -1,118 +1,106 @@
-import axios from "axios";
-
-// 🔥 CHANGE THIS LINE - Use local backend instead of production
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+import axiosInstance from "./axiosConfig";
 
 // 🔐 Auth header using JWT token from sessionStorage
 const authHeader = () => {
   const token = sessionStorage.getItem("token");
   return token
-    ? { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
-    : { withCredentials: true };
+    ? { headers: { Authorization: `Bearer ${token}` } }
+    : {};
 };
 
 // ================== AUTH (User & Admin) ==================
 
-// ✅ Register user/admin
+// ✅ Register user/admin - USING axiosInstance
 export const registerUser = (userData) =>
-  axios.post(`${API_BASE_URL}/users/register`, userData);
+  axiosInstance.post('/users/register', userData);
 
-// ✅ Login user/admin
+// ✅ Login user/admin - USING axiosInstance
 export const loginUser = (userData) =>
-  axios.post(`${API_BASE_URL}/users/login`, userData);
+  axiosInstance.post('/users/login', userData);
 
-// ✅ Verify email
+// ✅ Verify email - USING axiosInstance
 export const verifyEmail = (token) =>
-  axios.get(`${API_BASE_URL}/users/verify?token=${token}`);
+  axiosInstance.get(`/users/verify?token=${token}`);
 
-// ✅ Forgot password - request reset link
+// ✅ Forgot password - USING axiosInstance
 export const forgotPassword = (email) =>
-  axios.post(`${API_BASE_URL}/users/forgot-password`, { email });
+  axiosInstance.post('/users/forgot-password', { email });
 
-// ✅ Reset password - with token from email
+// ✅ Reset password - USING axiosInstance
 export const resetPassword = (token, newPassword) =>
-  axios.post(`${API_BASE_URL}/users/reset-password`, { token, newPassword });
+  axiosInstance.post('/users/reset-password', { token, newPassword });
 
 // ================== TURF APIs ==================
 
-// ✅ Get all turfs added by current admin (optional email filter)
+// ✅ Get all turfs added by current admin - USING axiosInstance
 export const getAllTurfs = (adminEmail) => {
   const url = adminEmail
-    ? `${API_BASE_URL}/turfs/admin/${encodeURIComponent(adminEmail)}`
-    : `${API_BASE_URL}/turfs/admin`;
-  return axios.get(url, authHeader());
+    ? `/turfs/admin/${encodeURIComponent(adminEmail)}`
+    : `/turfs/admin`;
+  return axiosInstance.get(url, authHeader());
 };
 
-// ✅ Get all public turfs (for users)
+// ✅ Get all public turfs - USING axiosInstance
 export const getPublicTurfs = () =>
-  axios.get(`${API_BASE_URL}/turfs/public`);
+  axiosInstance.get('/turfs/public');
 
-// ✅ Get turf by ID
+// ✅ Get turf by ID - USING axiosInstance
 export const getTurfById = (id) =>
-  axios.get(`${API_BASE_URL}/turfs/${id}`, authHeader());
+  axiosInstance.get(`/turfs/${id}`, authHeader());
 
-// ✅ Add a new turf (ADMIN)
+// ✅ Add a new turf - USING axiosInstance
 export const addTurf = (data) =>
-  axios.post(`${API_BASE_URL}/turfs`, data, authHeader());
+  axiosInstance.post('/turfs', data, authHeader());
 
-// ✅ Update existing turf (ADMIN)
+// ✅ Update existing turf - USING axiosInstance
 export const updateTurf = (id, data) =>
-  axios.put(`${API_BASE_URL}/turfs/${id}`, data, authHeader());
+  axiosInstance.put(`/turfs/${id}`, data, authHeader());
 
-// ✅ Delete turf by ID (ADMIN)
+// ✅ Delete turf by ID - USING axiosInstance
 export const deleteTurf = (id) =>
-  axios.delete(`${API_BASE_URL}/turfs/${id}`, authHeader());
+  axiosInstance.delete(`/turfs/${id}`, authHeader());
 
-// ✅ Upload images for a turf
+// ✅ Upload images for a turf - USING axiosInstance
 export const uploadImages = (turfId, formData) =>
-  axios.post(`${API_BASE_URL}/turfs/${turfId}/images`, formData, {
+  axiosInstance.post(`/turfs/${turfId}/images`, formData, {
     headers: {
-      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      ...authHeader().headers,
       "Content-Type": "multipart/form-data",
     },
-    withCredentials: true,
   });
 
 // ================== BOOKING APIs ==================
 
-// ✅ Create a new booking (USER)
+// ✅ Create a new booking - USING axiosInstance
 export const createBooking = (bookingData) =>
-  axios.post(`${API_BASE_URL}/bookings`, bookingData, authHeader());
+  axiosInstance.post('/bookings', bookingData, authHeader());
 
-// ✅ Get all bookings (ADMIN)
+// ✅ Get all bookings - USING axiosInstance
 export const getAllBookings = () =>
-  axios.get(`${API_BASE_URL}/bookings/all`, authHeader());
+  axiosInstance.get('/bookings/all', authHeader());
 
-// ✅ Get booking by ID
+// ✅ Get booking by ID - USING axiosInstance
 export const getBookingById = (id) =>
-  axios.get(`${API_BASE_URL}/bookings/${id}`, authHeader());
+  axiosInstance.get(`/bookings/${id}`, authHeader());
 
-// ✅ Get bookings for a specific turf
+// ✅ Get bookings for a specific turf - USING axiosInstance
 export const getBookingsByTurfId = (turfId) =>
-  axios.get(`${API_BASE_URL}/bookings/turf/${turfId}`, authHeader());
+  axiosInstance.get(`/bookings/turf/${turfId}`, authHeader());
 
-// ✅ Get bookings by user email (USER)
+// ✅ Get bookings by user email - USING axiosInstance
 export const getBookingsByUserEmail = (email) =>
-  axios.get(`${API_BASE_URL}/bookings/user/${email}`, authHeader());
+  axiosInstance.get(`/bookings/user/${email}`, authHeader());
 
-// ✅ Get admin's bookings using JWT (ADMIN)
+// ✅ Get admin's bookings using JWT - USING axiosInstance
 export const getAdminBookings = () =>
-  axios.get(`${API_BASE_URL}/bookings/admin`, authHeader());
+  axiosInstance.get('/bookings/admin', authHeader());
 
-// ✅ Delete a booking
+// ✅ Delete a booking - USING axiosInstance
 export const deleteBooking = (id) =>
-  axios.delete(`${API_BASE_URL}/bookings/${id}`, authHeader());
+  axiosInstance.delete(`/bookings/${id}`, authHeader());
 
-// ✅ Send booking confirmation (email or WhatsApp)
+// ✅ Send booking confirmation - USING axiosInstance
 export const sendBookingConfirmation = (bookingId) =>
-  axios.get(`${API_BASE_URL}/bookings/send-confirmation/${bookingId}`, authHeader());
-
-// ================== DEFAULT AXIOS INSTANCE ==================
-
-const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
+  axiosInstance.get(`/bookings/send-confirmation/${bookingId}`, authHeader());
 
 export default axiosInstance;
