@@ -26,7 +26,6 @@ public class BookingController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ✅ Create a new booking
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         try {
@@ -41,17 +40,6 @@ public class BookingController {
                     .build();
 
             Booking savedBooking = bookingService.createBooking(booking);
-
-            // ✅ Send confirmation email after booking creation
-            emailService.sendBookingConfirmationEmail(
-                    savedBooking.getUserEmail(),
-                    savedBooking.getUserName(),
-                    savedBooking.getTurfName(),
-                    savedBooking.getDate(),
-                    savedBooking.getSlot(),
-                    String.valueOf(savedBooking.getPrice())
-            );
-
             return ResponseEntity.status(201).body(savedBooking);
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,7 +47,6 @@ public class BookingController {
         }
     }
 
-    // ✅ Get bookings for admin's turfs using JWT
     @GetMapping("/admin")
     public ResponseEntity<?> getBookingsForAdminTurfs(HttpServletRequest request) {
         try {
@@ -67,7 +54,6 @@ public class BookingController {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(401).body("Unauthorized: Missing or invalid Authorization header");
             }
-
             String token = authHeader.substring(7);
             String adminEmail = jwtUtil.extractUsername(token);
 
@@ -79,7 +65,6 @@ public class BookingController {
         }
     }
 
-    // ✅ Get all bookings (for admin panel)
     @GetMapping("/all")
     public ResponseEntity<?> getAllBookings() {
         try {
@@ -90,7 +75,6 @@ public class BookingController {
         }
     }
 
-    // ✅ Get bookings by user email
     @GetMapping("/user/{email}")
     public ResponseEntity<?> getBookingsByUserEmail(@PathVariable String email) {
         try {
@@ -101,7 +85,6 @@ public class BookingController {
         }
     }
 
-    // ✅ Get bookings by turf ID
     @GetMapping("/turf/{turfId}")
     public ResponseEntity<?> getBookingsByTurfId(@PathVariable String turfId) {
         try {
@@ -112,63 +95,47 @@ public class BookingController {
         }
     }
 
-    // ✅ Send booking confirmation email manually
     @GetMapping("/send-confirmation/{bookingId}")
     public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(bookingId);
-
             if (optionalBooking.isPresent()) {
                 Booking booking = optionalBooking.get();
-
-                // ✅ Convert Long -> String properly
                 emailService.sendBookingConfirmationEmail(
                         booking.getUserEmail(),
                         booking.getUserName(),
                         booking.getTurfName(),
                         booking.getDate(),
                         booking.getSlot(),
-                        String.valueOf(booking.getPrice())
+                        String.valueOf(booking.getPrice()) // ✅ Fix Long → String
                 );
-
-                // ✅ Example of using bookingId safely as String
-                String bookingIdStr = String.valueOf(bookingId);
-                System.out.println("Email sent for booking ID: " + bookingIdStr);
-
-                return ResponseEntity.ok("✅ Booking confirmation email sent for ID: " + bookingIdStr);
+                return ResponseEntity.ok("✅ Booking confirmation email sent for booking ID: " + bookingId);
             } else {
                 return ResponseEntity.status(404).body("❌ Booking not found for ID: " + bookingId);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to send booking confirmation email.");
         }
     }
 
-    // ✅ Get booking by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getBookingById(@PathVariable Long id) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
-            if (optionalBooking.isPresent()) {
-                return ResponseEntity.ok(optionalBooking.get());
-            } else {
-                return ResponseEntity.status(404).body("❌ Booking not found for ID: " + id);
-            }
+            return optionalBooking.map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(404).body("❌ Booking not found for ID: " + id));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to fetch booking by ID");
         }
     }
 
-    // ✅ Delete booking by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
         try {
             bookingService.deleteBooking(id);
-            String idStr = String.valueOf(id); // ✅ Long -> String conversion
-            return ResponseEntity.ok("✅ Booking deleted successfully with ID: " + idStr);
+            return ResponseEntity.ok("✅ Booking deleted successfully for ID: " + id);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Booking deletion failed for ID: " + id);
