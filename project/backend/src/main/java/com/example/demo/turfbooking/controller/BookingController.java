@@ -41,7 +41,6 @@ public class BookingController {
 
             Booking savedBooking = bookingService.createBooking(booking);
             return ResponseEntity.status(201).body(savedBooking);
-
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Booking creation failed: " + e.getMessage());
@@ -60,7 +59,6 @@ public class BookingController {
 
             List<Booking> bookings = bookingService.getBookingsByAdminEmail(adminEmail);
             return ResponseEntity.ok(bookings);
-
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to fetch bookings for admin");
@@ -70,8 +68,7 @@ public class BookingController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllBookings() {
         try {
-            List<Booking> bookings = bookingService.getAllBookings();
-            return ResponseEntity.ok(bookings);
+            return ResponseEntity.ok(bookingService.getAllBookings());
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to fetch all bookings");
@@ -81,8 +78,7 @@ public class BookingController {
     @GetMapping("/user/{email}")
     public ResponseEntity<?> getBookingsByUserEmail(@PathVariable String email) {
         try {
-            List<Booking> bookings = bookingService.getBookingsByUserEmail(email);
-            return ResponseEntity.ok(bookings);
+            return ResponseEntity.ok(bookingService.getBookingsByUserEmail(email));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to fetch bookings for user: " + email);
@@ -92,8 +88,7 @@ public class BookingController {
     @GetMapping("/turf/{turfId}")
     public ResponseEntity<?> getBookingsByTurfId(@PathVariable String turfId) {
         try {
-            List<Booking> bookings = bookingService.getBookingsByTurfId(turfId);
-            return ResponseEntity.ok(bookings);
+            return ResponseEntity.ok(bookingService.getBookingsByTurfId(turfId));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("❌ Failed to fetch bookings for turf ID: " + turfId);
@@ -112,7 +107,7 @@ public class BookingController {
                         booking.getTurfName(),
                         booking.getDate(),
                         booking.getSlot(),
-                        String.valueOf(booking.getPrice())
+                        String.valueOf(booking.getPrice()) // ✅ ensure String
                 );
                 return ResponseEntity.ok("✅ Booking confirmation email sent.");
             } else {
