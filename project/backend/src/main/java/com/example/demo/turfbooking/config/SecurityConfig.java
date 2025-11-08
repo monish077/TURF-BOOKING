@@ -107,7 +107,8 @@ public class SecurityConfig {
                     "/api/users/reset-password",
                     "/api/users/test-mail",
                     "/api/users/test-public",
-                    "/api/users/test-echo"
+                    "/api/users/test-echo",
+                    "/api/test-email"  // ✅ ADDED: Email test endpoint
                 ).permitAll()
 
                 // Testing and debugging endpoints

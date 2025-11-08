@@ -1,75 +1,68 @@
 package com.example.demo.turfbooking.controller;
 
-import com.example.demo.turfbooking.service.EmailService;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/test")
-@CrossOrigin(origins = {
-    "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",
-    "http://localhost:3000"
-}, allowCredentials = "true")
+@RequestMapping("/api")
 public class EmailTestController {
 
     @Autowired
-    private EmailService emailService;
+    private JavaMailSender mailSender;
 
-    @PostConstruct
-    public void init() {
-        System.out.println("✅ EmailTestController loaded. Ready for testing email service.");
+    /**
+     * Simple test email endpoint
+     * Usage: GET /api/test-email
+     */
+    @GetMapping("/test-email")
+    public String testEmail() {
+        try {
+            System.out.println("🚀 TEST: Attempting to send test email...");
+            
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo("monidhoni0007@gmail.com");
+            message.setSubject("✅ Test Email from Turf Booking");
+            message.setText("This is a test email from your Turf Booking application. If you receive this, email service is working!");
+            message.setFrom("monidhoni0007@gmail.com");
+            
+            mailSender.send(message);
+            System.out.println("✅ TEST: Email sent successfully!");
+            
+            return "✅ Test email sent successfully to monidhoni0007@gmail.com! Check your inbox.";
+            
+        } catch (Exception e) {
+            System.out.println("❌ TEST: Email failed: " + e.getMessage());
+            e.printStackTrace();
+            return "❌ Email test failed: " + e.getMessage();
+        }
     }
 
     /**
-     * Sends a basic test email to verify SMTP configuration
-     * Usage: GET /test/send
+     * Test email with custom recipient
+     * Usage: GET /api/test-email-custom?email=your@email.com
      */
-    @GetMapping("/send")
-    public String sendTestEmail() {
+    @GetMapping("/test-email-custom")
+    public String testEmailCustom(@RequestParam String email) {
         try {
-            emailService.sendEmail(
-                "monidhoni0007@gmail.com", // Change this to your test email
-                "📧 Test Email from Turf Booking System",
-                """
-                <h2 style='color:green;'>✅ Email Service Test Successful</h2>
-                <p>This is a <b>test email</b> sent from your <i>Spring Boot</i> backend.</p>
-                <p>If you are reading this, your SMTP configuration is working correctly!</p>
-                """
-            );
-            return "✅ Test Email Sent Successfully! Check your inbox.";
+            System.out.println("🚀 TEST: Attempting to send test email to: " + email);
+            
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(email);
+            message.setSubject("✅ Test Email from Turf Booking");
+            message.setText("This is a test email from your Turf Booking application. If you receive this, email service is working!");
+            message.setFrom("monidhoni0007@gmail.com");
+            
+            mailSender.send(message);
+            System.out.println("✅ TEST: Email sent successfully to: " + email);
+            
+            return "✅ Test email sent successfully to " + email + "! Check your inbox.";
+            
         } catch (Exception e) {
+            System.out.println("❌ TEST: Email failed: " + e.getMessage());
             e.printStackTrace();
-            return "❌ Failed to send email: " + e.getMessage();
-        }
-    }
-
-    /**
-     * Sends a custom email using query parameters
-     * Example: GET /test/sendCustom?to=email@example.com&subject=Hello&body=Hi+there
-     */
-    @GetMapping("/sendCustom")
-    public String sendCustomEmail(
-            @RequestParam String to,
-            @RequestParam String subject,
-            @RequestParam String body) {
-
-        if (to == null || to.isBlank()) {
-            return "❌ 'to' parameter is required";
-        }
-        if (subject == null || subject.isBlank()) {
-            return "❌ 'subject' parameter is required";
-        }
-        if (body == null || body.isBlank()) {
-            return "❌ 'body' parameter is required";
-        }
-
-        try {
-            emailService.sendEmail(to, subject, body);
-            return "✅ Email sent successfully to " + to;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Failed to send email: " + e.getMessage();
+            return "❌ Email test failed: " + e.getMessage();
         }
     }
 }
