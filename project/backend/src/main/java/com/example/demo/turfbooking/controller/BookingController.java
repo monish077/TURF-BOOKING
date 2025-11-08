@@ -31,12 +31,10 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         try {
-            System.out.println("📩 Incoming booking request: " + request);
-
             Booking booking = Booking.builder()
                     .userName(request.getUserName())
                     .userEmail(request.getUserEmail())
-                    .turfId(request.getTurfId())  // turfId is String here
+                    .turfId(request.getTurfId())  // keep as String or update accordingly
                     .turfName(request.getTurfName())
                     .date(request.getDate())
                     .slot(request.getSlot())
@@ -52,7 +50,7 @@ public class BookingController {
         }
     }
 
-    // Secure: Get bookings for the admin’s turfs using JWT
+    // Secure: Get bookings for admin’s turfs using JWT
     @GetMapping("/admin")
     public ResponseEntity<?> getBookingsForAdminTurfs(HttpServletRequest request) {
         try {
@@ -62,8 +60,6 @@ public class BookingController {
             }
             String token = authHeader.substring(7);
             String adminEmail = jwtUtil.extractUsername(token);
-
-            System.out.println("📩 Fetching bookings for Admin: " + adminEmail);
 
             List<Booking> bookings = bookingService.getBookingsByAdminEmail(adminEmail);
             return ResponseEntity.ok(bookings);
