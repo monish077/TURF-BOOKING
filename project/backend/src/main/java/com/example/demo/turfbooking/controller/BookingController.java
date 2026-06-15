@@ -96,7 +96,7 @@ public class BookingController {
     }
 
     @GetMapping("/send-confirmation/{bookingId}")
-    public ResponseEntity<?> sendConfirmationEmail(@PathVariable Long bookingId) {
+    public ResponseEntity<?> sendConfirmationEmail(@PathVariable String bookingId) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(bookingId);
             if (optionalBooking.isPresent()) {
@@ -120,7 +120,7 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
+    public ResponseEntity<?> getBookingById(@PathVariable String id) {
         try {
             Optional<Booking> optionalBooking = bookingService.getBookingById(id);
             if (optionalBooking.isPresent()) {
@@ -135,7 +135,7 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBooking(@PathVariable String id) {
         try {
             bookingService.deleteBooking(id);
             return ResponseEntity.ok("✅ Booking deleted successfully for ID: " + id);
