@@ -128,6 +128,16 @@ public class TestController {
             return "❌ Error: " + e.getMessage();
         }
     }
+ 
+    @GetMapping("/clear-users")
+    public String clearUsers() {
+        try {
+            userRepository.deleteAll();
+            return "✅ All users deleted successfully from the database!";
+        } catch (Exception e) {
+            return "❌ Failed to delete users: " + e.getMessage();
+        }
+    }
 
     // ========== Verification Debug ==========
 
