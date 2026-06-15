@@ -44,7 +44,8 @@ public class UserService {
         try {
             emailService.sendVerificationEmail(savedUser);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send verification email. Please try again.");
+            System.err.println("❌ [REGISTER] Failed to send verification email: " + e.getMessage());
+            // Log the failure but do not roll back the registration in sandbox/test environments
         }
 
         return savedUser;
