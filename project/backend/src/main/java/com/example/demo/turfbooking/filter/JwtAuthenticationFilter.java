@@ -1,4 +1,4 @@
-package com.example.demo.turfbooking.jwt;
+package com.example.demo.turfbooking.filter;
 
 import com.example.demo.turfbooking.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;

@@ -69,9 +69,17 @@ public class UserController {
         if (isApiRequest) {
             // API call: return JSON
             response.setContentType("application/json");
-            response.getWriter().write(
-                    "{\"status\":\"" + (verified ? "success" : "error") + "\"}"
-            );
+            if (verified) {
+                response.setStatus(200);
+                response.getWriter().write(
+                        "{\"status\":\"success\",\"message\":\"Email verified successfully!\"}"
+                );
+            } else {
+                response.setStatus(400);
+                response.getWriter().write(
+                        "{\"status\":\"error\",\"message\":\"Verification failed. Invalid or expired token.\"}"
+                );
+            }
         } else {
             // Email link click: redirect to frontend page
             if (verified) {

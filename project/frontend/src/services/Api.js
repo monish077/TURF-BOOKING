@@ -1,4 +1,4 @@
-import axiosInstance from "./axiosConfig";
+import axiosInstance from "./axiosInstance";
 
 // 🔐 Auth header using JWT token from sessionStorage
 const authHeader = () => {

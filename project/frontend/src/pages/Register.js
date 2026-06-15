@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { registerUser } from "../services/Api";
 import "../assets/styles/home.css";
 import { Link } from "react-router-dom";
-import turfImg from "../assets/images/turffield.jpg";
 
 function Register() {
   const [form, setForm] = useState({
@@ -14,12 +13,10 @@ function Register() {
   const [error, setError] = useState("");
   const [showPopup, setShowPopup] = useState(false);
 
-  // ✅ Handle form input changes
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -30,10 +27,9 @@ function Register() {
       if (response.status >= 200 && response.status < 300) {
         setShowPopup(true);
       } else {
-        setError("Registration failed ❌");
+        setError("Registration failed. Please try again.");
       }
     } catch (err) {
-      console.error("❌ Registration error:", err);
       const errorMsg =
         err.response?.data?.error ||
         err.response?.data?.message ||
@@ -43,35 +39,43 @@ function Register() {
   };
 
   return (
-    <div className="container">
-      {/* ✅ Success Popup */}
+    <div className="auth-page">
+      {/* Success Popup */}
       {showPopup && (
-        <div style={popupStyles.overlay}>
-          <div style={popupStyles.popup}>
-            <h2 style={{ color: "#2ecc71" }}>✅ Registration Successful</h2>
+        <div className="popup-overlay">
+          <div className="popup-card">
+            <div className="popup-icon">✅</div>
+            <h2>Registration Successful!</h2>
             <p>
-              Please check your email and click the verification link to
-              activate your account.
+              Please check your email inbox and click the verification link to
+              activate your account before logging in.
             </p>
             <button
-              style={popupStyles.button}
+              id="popup-ok-btn"
+              className="popup-btn"
               onClick={() => setShowPopup(false)}
             >
-              OK
+              Got it!
             </button>
           </div>
         </div>
       )}
 
-      {/* ✅ Left Section */}
-      <div className="left-section">
-        <h1>MARS ARENA</h1>
-        <h2>Create an Account</h2>
+      <div className="auth-card">
+        {/* Brand */}
+        <div className="auth-logo">MARS ARENA</div>
+        <div className="auth-tagline">Turf Booking Platform</div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        <div className="auth-divider" />
+
+        <div className="auth-heading">Create your account</div>
+        <div className="auth-subheading">Join the arena today</div>
+
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Name*</label>
+            <label htmlFor="reg-name">Full Name</label>
             <input
+              id="reg-name"
               type="text"
               name="name"
               placeholder="Enter your full name"
@@ -82,11 +86,12 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label>Email*</label>
+            <label htmlFor="reg-email">Email Address</label>
             <input
+              id="reg-email"
               type="email"
               name="email"
-              placeholder="Enter your email address"
+              placeholder="Enter your email"
               value={form.email}
               onChange={handleChange}
               required
@@ -94,11 +99,12 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label>Password*</label>
+            <label htmlFor="reg-password">Password</label>
             <input
+              id="reg-password"
               type="password"
               name="password"
-              placeholder="Create a password"
+              placeholder="Create a strong password"
               value={form.password}
               onChange={handleChange}
               required
@@ -106,85 +112,41 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label>Role*</label>
+            <label htmlFor="reg-role">Account Type</label>
             <select
+              id="reg-role"
               name="role"
               value={form.role}
               onChange={handleChange}
               className="custom-select"
               required
             >
-              <option value="USER">User</option>
-              <option value="ADMIN">Admin</option>
+              <option value="USER">Player (User)</option>
+              <option value="ADMIN">Turf Manager (Admin)</option>
             </select>
           </div>
 
           {error && (
-            <p style={{ color: "red", marginTop: "10px" }}>{error}</p>
+            <div className="auth-error">
+              <span>⚠️</span> {error}
+            </div>
           )}
 
-          <button type="submit" className="login-btn">
-            Sign Up
+          <button
+            type="submit"
+            id="register-submit-btn"
+            className="login-btn"
+          >
+            Create Account →
           </button>
         </form>
 
         <p className="signup-link">
-          Already have an account? <Link to="/login">Log In</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </p>
-      </div>
-
-      {/* ✅ Right Section */}
-      <div className="right-section">
-        <img
-          src={turfImg}
-          alt="Turf Field"
-          className="right-img"
-          onError={(e) => {
-            e.target.style.display = "none";
-            e.target.parentNode.style.backgroundImage =
-              "url('https://images.unsplash.com/photo-1600880292089-90a7e086ee0a?auto=format&fit=crop&w=987&q=80')";
-            e.target.parentNode.style.backgroundSize = "cover";
-            e.target.parentNode.style.backgroundPosition = "center";
-          }}
-        />
       </div>
     </div>
   );
 }
-
-const popupStyles = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
-  },
-  popup: {
-    backgroundColor: "#1e1e1e",
-    padding: "30px",
-    borderRadius: "12px",
-    color: "#fff",
-    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-    textAlign: "center",
-    maxWidth: "400px",
-    width: "90%",
-  },
-  button: {
-    marginTop: "20px",
-    padding: "10px 24px",
-    backgroundColor: "#2ecc71",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "16px",
-  },
-};
 
 export default Register;

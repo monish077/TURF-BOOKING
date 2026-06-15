@@ -1,6 +1,6 @@
 package com.example.demo.turfbooking.config;
 
-import com.example.demo.turfbooking.jwt.JwtAuthenticationFilter;
+import com.example.demo.turfbooking.filter.JwtAuthenticationFilter;
 import com.example.demo.turfbooking.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

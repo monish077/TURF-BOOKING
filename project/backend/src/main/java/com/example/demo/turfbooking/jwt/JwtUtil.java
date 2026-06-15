@@ -19,7 +19,7 @@ public class JwtUtil {
         return extractEmail(token);
     }
 
-    @Value("${JWT_SECRET}")
+    @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration}")

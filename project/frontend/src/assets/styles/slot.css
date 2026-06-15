@@ -1,206 +1,190 @@
-/* Reset box model and global font */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ==========================================
+   MARS ARENA — Slot / Turf Listing Page
+   Premium Dark Grid Design
+========================================== */
 
-body {
-  font-family: Arial, sans-serif;
-}
-
-/* Main Slots Page Layout */
 .slots-page {
-  background: linear-gradient(to bottom right, #0f2d26, #163831);
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  color: white;
-  padding: 20px 40px;
-}
-/* Navbar Styling */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  border-radius: 10px;
-  position: relative;
+  background:
+    radial-gradient(ellipse at 10% 10%, rgba(0,255,157,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(124,58,237,0.06) 0%, transparent 50%),
+    #060a0f;
 }
 
-.logo {
-  font-size: 22px;
-  font-weight: bold;
-  color: white;
-}
-
-/* Centered nav links container */
-.center-nav {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.nav-links {
-  display: flex;
-  gap: 30px;
-  list-style: none;
-}
-
-.nav-links a {
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-links a:hover {
-  color: #66ff99;
-}
-
-
-.book-btn {
-  background-color: #66ff99;
-  color: #000;
-  padding: 8px 18px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.book-btn:hover {
-  background-color: #52e086;
-}
-
-/* Header section styling */
+/* ---- Header Section ---- */
 .slots-header {
-  max-width: 1000px;
-  margin: 80px auto 30px auto;
   text-align: center;
+  padding: 64px 24px 40px;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
 .slots-header h2 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(28px, 5vw, 46px);
+  font-weight: 800;
+  color: #f0f4f8;
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+
+.slots-header h2 span {
+  background: linear-gradient(135deg, #00ff9d, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .slots-header p {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #d4d4d4;
+  font-size: 15px;
+  color: #8a9bb0;
+  line-height: 1.7;
 }
 
-.slots-header h3 {
-  margin-top: 25px;
-  font-size: 20px;
-  color: #6bff91;
-}
-
-/* Facilities list */
-.facilities-list {
-  list-style: none;
-  padding-left: 0;
-  margin-top: 10px;
-}
-
-.facilities-list li {
-  margin: 5px 0;
-  color: #cccccc;
-}
-
-/* Filter & Sort buttons */
-.filter-sort {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.filter-sort button {
-  padding: 8px 16px;
-  border: none;
-  background: white;
-  color: black;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background 0.3s ease;
-}
-
-.filter-sort button:hover {
-  background: #e1e1e1;
-}
-
-/* Turf grid layout */
+/* ---- Turf Grid ---- */
 .turf-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 25px;
-  max-width: 1200px;
-  margin: 30px auto;
-  padding-bottom: 40px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 0 32px 80px;
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
-/* Turf card styles */
+/* ---- Turf Card ---- */
 .turf-card {
-  background: #1a3a31;
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  transition: transform 0.3s ease;
+  background: rgba(13, 21, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  cursor: pointer;
 }
 
 .turf-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px);
+  border-color: rgba(0, 255, 157, 0.25);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.5),
+    0 0 30px rgba(0,255,157,0.08);
 }
 
-.turf-card img {
+/* Card image */
+.turf-image {
   width: 100%;
-  height: 160px;
+  height: 200px;
   object-fit: cover;
-  border-radius: 6px;
+  display: block;
+  transition: transform 0.4s ease;
 }
 
-.turf-card h4 {
-  margin: 10px 0 5px 0;
-  color: #ffffff;
+.turf-card:hover .turf-image {
+  transform: scale(1.04);
 }
 
-.turf-card p {
-  color: #cfcfcf;
-  margin-bottom: 10px;
+/* Card body */
+.turf-card-body {
+  padding: 20px 22px 22px;
 }
 
-/* Book Now button */
+.turf-card-body h4 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f0f4f8;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turf-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #8a9bb0;
+  margin-bottom: 4px;
+}
+
+.turf-card-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ff9d;
+  margin: 10px 0 16px;
+}
+
+.turf-card-price span {
+  font-size: 13px;
+  font-weight: 400;
+  color: #4a5568;
+}
+
+/* Book button inside card */
 .book-now-btn {
-  margin-top: 12px;
-  padding: 10px 24px;
-  background-color: #fafafa;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #00ff9d, #00c77a);
+  color: #060a0f;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
   border: none;
-  border-radius: 8px;
-  color: #030202;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
 }
 
 .book-now-btn:hover {
-  background-color: #45a049;
-  color: white;
+  box-shadow: 0 6px 20px rgba(0, 255, 157, 0.35);
+  transform: translateY(-1px);
 }
 
-/* Footer style */
-.footer {
-  background-color: #111;
-  color: #ccc;
-  padding: 12px 0;
+/* Empty / Loading state */
+.loading-text {
+  grid-column: 1 / -1;
   text-align: center;
-  font-size: 14px;
-  margin-top: 30px;
+  color: #4a5568;
+  font-size: 16px;
+  padding: 60px 20px;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(0,255,157,0.2);
+  border-top-color: #00ff9d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .turf-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    padding: 0 16px 60px;
+    gap: 16px;
+  }
+
+  .slots-header {
+    padding: 48px 16px 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .turf-grid {
+    grid-template-columns: 1fr;
+  }
 }
