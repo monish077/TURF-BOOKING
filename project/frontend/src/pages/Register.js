@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { registerUser } from "../services/Api";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, User as UserIcon, Shield, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import turfImage from "../assets/images/field.jpg";
+import { Mail, Lock, Eye, EyeOff, User as UserIcon, Shield, ArrowRight, AlertCircle, CheckCircle2, Loader2, Zap } from "lucide-react";
+import turfImage from "../assets/images/auth_turf.png";
 
 function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "USER" });
@@ -69,34 +69,68 @@ function Register() {
         )}
       </AnimatePresence>
 
-      {/* Left Side - Image & Branding (60%) */}
+      {/* ─── Left Panel – 60% Image + Centered Text ─── */}
       <div className="hidden lg:flex lg:w-[60%] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#060a0f]/80 via-[#060a0f]/30 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060a0f] via-transparent to-transparent z-10" />
-        <img src={turfImage} alt="Premium Turf" className="w-full h-full object-cover" />
 
-        {/* Top Logo */}
-        <div className="absolute top-10 left-12 z-20">
-          <Link to="/" className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+        {/* Image */}
+        <img
+          src={turfImage}
+          alt="Premium Turf"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+
+        {/* Dark overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#060a0f]/85 via-[#060a0f]/50 to-[#060a0f]/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#060a0f]/90 via-transparent to-[#060a0f]/30" />
+
+        {/* ── Centered Branding Content ── */}
+        <div className="relative z-20 flex flex-col justify-center px-16 py-12 h-full">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium mb-6 w-fit">
+            <Zap size={14} className="fill-emerald-400" />
+            <span>Premium Turf</span>
+          </div>
+
+          {/* Brand Name */}
+          <Link
+            to="/"
+            className="text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-6 block leading-none"
+          >
             MARS ARENA
           </Link>
-        </div>
 
-        {/* Bottom Tagline */}
-        <div className="absolute bottom-16 left-12 z-20 max-w-lg">
-          <h2 className="text-4xl font-black text-white mb-4 leading-tight">
+          {/* Main Heading */}
+          <h2 className="text-4xl font-black text-white leading-tight mb-4">
             Join the Elite<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-300">
               Community of Players
             </span>
           </h2>
-          <p className="text-slate-400 text-lg">
+
+          {/* Tagline */}
+          <p className="text-slate-400 text-lg leading-relaxed max-w-sm">
             Play. Compete. Win. — Your game starts here.
           </p>
+
+          {/* Divider + Stats */}
+          <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-3 gap-6 max-w-sm">
+            <div>
+              <div className="text-2xl font-black text-white">20+</div>
+              <div className="text-xs text-slate-500 mt-0.5">Premium Turfs</div>
+            </div>
+            <div>
+              <div className="text-2xl font-black text-white">5K+</div>
+              <div className="text-xs text-slate-500 mt-0.5">Happy Players</div>
+            </div>
+            <div>
+              <div className="text-2xl font-black text-white">24/7</div>
+              <div className="text-xs text-slate-500 mt-0.5">Support</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right Side - Form (40%) */}
+      {/* ─── Right Panel – 40% Form ─── */}
       <div className="w-full lg:w-[40%] flex items-center justify-center p-6 sm:p-12 relative overflow-hidden">
         <div className="lg:hidden absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
@@ -115,7 +149,7 @@ function Register() {
             <p className="text-slate-500 text-sm mt-1">Play. Compete. Win.</p>
           </div>
 
-          <div className="mb-8 text-center lg:text-left">
+          <div className="mb-8">
             <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Create an account</h1>
             <p className="text-slate-400">Join the arena today</p>
           </div>

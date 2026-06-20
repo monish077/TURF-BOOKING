@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import axiosInstance from "../services/axiosInstance";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import turfImage from "../assets/images/field.jpg";
+import { Mail, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Loader2, Zap } from "lucide-react";
+import turfImage from "../assets/images/auth_turf.png";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -33,30 +33,50 @@ function ForgotPassword() {
   return (
     <div className="min-h-screen bg-[#060a0f] flex font-inter">
 
-      {/* Left Side - Image & Branding (60%) */}
+      {/* ─── Left Panel – 60% Image + Centered Text ─── */}
       <div className="hidden lg:flex lg:w-[60%] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#060a0f]/80 via-[#060a0f]/30 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060a0f] via-transparent to-transparent z-10" />
-        <img src={turfImage} alt="Premium Turf" className="w-full h-full object-cover" />
+        <img
+          src={turfImage}
+          alt="Premium Turf"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#060a0f]/85 via-[#060a0f]/50 to-[#060a0f]/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#060a0f]/90 via-transparent to-[#060a0f]/30" />
 
-        {/* Top Logo */}
-        <div className="absolute top-10 left-12 z-20">
-          <Link to="/" className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+        <div className="relative z-20 flex flex-col justify-center px-16 py-12 h-full">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium mb-6 w-fit">
+            <Zap size={14} className="fill-emerald-400" />
+            <span>Premium Turf</span>
+          </div>
+          <Link
+            to="/"
+            className="text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-6 block leading-none"
+          >
             MARS ARENA
           </Link>
-        </div>
-
-        {/* Bottom Tagline */}
-        <div className="absolute bottom-16 left-12 z-20 max-w-lg">
-          <h2 className="text-4xl font-black text-white mb-4 leading-tight">
+          <h2 className="text-4xl font-black text-white leading-tight mb-4">
             Book Premium Turf<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-300">
               Grounds Instantly
             </span>
           </h2>
-          <p className="text-slate-400 text-lg">
-            Play. Compete. Win. — Your arena awaits.
+          <p className="text-slate-400 text-lg leading-relaxed max-w-sm">
+            Forgot your password? No problem — we've got you covered.
           </p>
+          <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-3 gap-6 max-w-sm">
+            <div>
+              <div className="text-2xl font-black text-white">20+</div>
+              <div className="text-xs text-slate-500 mt-0.5">Premium Turfs</div>
+            </div>
+            <div>
+              <div className="text-2xl font-black text-white">5K+</div>
+              <div className="text-xs text-slate-500 mt-0.5">Happy Players</div>
+            </div>
+            <div>
+              <div className="text-2xl font-black text-white">24/7</div>
+              <div className="text-xs text-slate-500 mt-0.5">Support</div>
+            </div>
+          </div>
         </div>
       </div>
 

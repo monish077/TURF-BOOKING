@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarCheck, Shield, Zap, ArrowRight } from "lucide-react";
-import turfImage from "../assets/images/field.jpg";
+import turfImage from "../assets/images/hero_turf.png";
 
 const Landing = () => {
   return (
