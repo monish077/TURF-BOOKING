@@ -76,18 +76,65 @@ public class UserService {
                 });
     }
 
-    public Optional<User> loginUser(String email, String rawPassword) {
-        return userRepository.findByEmail(email)
-                .filter(user -> {
-                    if (!user.isEnabled()) {
-                        throw new RuntimeException("Email not verified: " + email);
-                    }
-                    boolean passwordMatches = passwordEncoder.matches(rawPassword, user.getPassword());
-                    if (!passwordMatches) {
-                        System.out.println("[LOGIN] Incorrect password for: " + email);
-                    }
-                    return passwordMatches;
-                });
+    /**
+     * Returns:
+     *   - non-empty Optional<User>  → credentials valid, account enabled
+     *   - empty Optional with reason → caller maps to 401
+     * Never throws — avoids 500 from uncaught RuntimeException inside filter().
+     */
+    public LoginResult loginUser(String email, String rawPassword) {
+        Optional<User> found = userRepository.findByEmail(email);
+        if (found.isEmpty()) {
+            System.out.println("[LOGIN] No account for: " + email);
+            return LoginResult.fail("Invalid credentials.");
+        }
+        User user = found.get();
+        if (!user.isEnabled()) {
+            System.out.println("[LOGIN] Account not verified: " + email);
+            return LoginResult.fail("Email not verified. Please check your inbox and click the verification link.");
+        }
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            System.out.println("[LOGIN] Wrong password for: " + email);
+            return LoginResult.fail("Invalid credentials.");
+        }
+        return LoginResult.ok(user);
+    }
+
+    /** Simple result wrapper to avoid throwing inside lambdas. */
+    public static class LoginResult {
+        public final boolean success;
+        public final User user;
+        public final String errorMessage;
+
+        private LoginResult(boolean success, User user, String errorMessage) {
+            this.success = success;
+            this.user = user;
+            this.errorMessage = errorMessage;
+        }
+        public static LoginResult ok(User user) { return new LoginResult(true, user, null); }
+        public static LoginResult fail(String msg) { return new LoginResult(false, null, msg); }
+    }
+
+    /**
+     * Resend verification email for a registered-but-unverified user.
+     */
+    public void resendVerificationEmail(String email) {
+        userRepository.findByEmail(email).ifPresentOrElse(user -> {
+            if (user.isEnabled()) {
+                throw new RuntimeException("Account already verified.");
+            }
+            // Regenerate token for safety
+            user.setVerificationToken(UUID.randomUUID().toString());
+            userRepository.save(user);
+            try {
+                emailService.sendVerificationEmail(user);
+                System.out.println("[RESEND] Verification email resent to: " + email);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to send verification email: " + e.getMessage());
+            }
+        }, () -> {
+            throw new RuntimeException("No account found with email: " + email);
+        });
     }
 
     public void sendPasswordResetLink(String email) {

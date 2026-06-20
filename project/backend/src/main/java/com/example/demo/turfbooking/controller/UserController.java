@@ -4,6 +4,7 @@ import com.example.demo.turfbooking.entity.User;
 import com.example.demo.turfbooking.jwt.JwtUtil;
 import com.example.demo.turfbooking.service.EmailService;
 import com.example.demo.turfbooking.service.UserService;
+import com.example.demo.turfbooking.service.UserService.LoginResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,16 +99,16 @@ public class UserController {
         String email = request.get("email");
         String password = request.get("password");
 
-        return userService.loginUser(email, password)
-                .map(user -> {
-                    String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-                    return ResponseEntity.ok(Map.of(
-                            "token", token,
-                            "role", user.getRole(),
-                            "email", user.getEmail()
-                    ));
-                })
-                .orElse(ResponseEntity.status(401).body(Map.of("error", "Invalid credentials or email not verified.")));
+        LoginResult result = userService.loginUser(email, password);
+        if (!result.success) {
+            return ResponseEntity.status(401).body(Map.of("error", result.errorMessage));
+        }
+        String token = jwtUtil.generateToken(result.user.getEmail(), result.user.getRole().name());
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "role", result.user.getRole(),
+                "email", result.user.getEmail()
+        ));
     }
 
     /**
@@ -119,6 +120,21 @@ public class UserController {
         try {
             userService.sendPasswordResetLink(email);
             return ResponseEntity.ok(Map.of("message", "Reset link sent to your email."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Resend verification email (for users stuck after registration)
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        try {
+            userService.resendVerificationEmail(email);
+            return ResponseEntity.ok(Map.of("message", "Verification email resent. Please check your inbox."));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

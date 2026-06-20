@@ -105,6 +105,7 @@ public class SecurityConfig {
                     "/api/users/email-verified",
                     "/api/users/forgot-password",
                     "/api/users/reset-password",
+                    "/api/users/resend-verification",  // ✅ Resend verification email
                     "/api/users/test-mail",
                     "/api/users/test-public",
                     "/api/users/test-echo",
