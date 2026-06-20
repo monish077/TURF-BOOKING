@@ -107,7 +107,7 @@ const Slot = () => {
             <div className="turf-card" key={turf.id}>
               <img
                 src={turf.image}
-                alt={`Photo of ${turf.name}`}
+                alt={turf.name}
                 className="turf-image"
                 onError={(e) => {
                   e.target.src = "/default-turf.jpg";
