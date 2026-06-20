@@ -3,50 +3,73 @@ package com.example.demo.turfbooking.controller;
 import com.example.demo.turfbooking.service.EmailService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/test")
-@CrossOrigin(origins = {
-    "https://turf-booking-3dehj06rl-monishs-projects-29844c66.vercel.app",
-    "http://localhost:3000"
-}, allowCredentials = "true")
+@CrossOrigin(origins = "*")
 public class EmailTestController {
 
     @Autowired
     private EmailService emailService;
 
+    @Value("${spring.mail.username:NOT_SET}")
+    private String mailUsername;
+
+    @Value("${spring.mail.host:NOT_SET}")
+    private String mailHost;
+
+    @Value("${spring.mail.port:0}")
+    private int mailPort;
+
     @PostConstruct
     public void init() {
-        System.out.println("✅ EmailTestController loaded. Ready for testing email service.");
+        System.out.println("✅ EmailTestController loaded.");
+        System.out.println("   SMTP Host    : " + mailHost);
+        System.out.println("   SMTP Port    : " + mailPort);
+        System.out.println("   SMTP Username: " + mailUsername);
     }
 
     /**
-     * Sends a basic test email to verify SMTP configuration
-     * Usage: GET /test/send
+     * Diagnostic endpoint — shows SMTP config and tries to send a test email.
+     * GET /test/send
      */
     @GetMapping("/send")
     public String sendTestEmail() {
+        StringBuilder info = new StringBuilder();
+        info.append("=== SMTP CONFIG ===\n");
+        info.append("Host     : ").append(mailHost).append("\n");
+        info.append("Port     : ").append(mailPort).append("\n");
+        info.append("Username : ").append(mailUsername).append("\n\n");
+
         try {
             emailService.sendEmail(
-                "monidhoni0007@gmail.com", // Change this to your test email
-                "📧 Test Email from Turf Booking System",
+                mailUsername,
+                "📧 Test Email — Mars Arena Backend",
                 """
-                <h2 style='color:green;'>✅ Email Service Test Successful</h2>
-                <p>This is a <b>test email</b> sent from your <i>Spring Boot</i> backend.</p>
-                <p>If you are reading this, your SMTP configuration is working correctly!</p>
+                <h2 style='color:green;'>✅ SMTP is working!</h2>
+                <p>If you see this, your email configuration is correct.</p>
                 """
             );
-            return "✅ Test Email Sent Successfully! Check your inbox.";
+            info.append("✅ Email sent successfully to: ").append(mailUsername);
+            return info.toString();
         } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Failed to send email: " + e.getMessage();
+            // Walk full cause chain for real error
+            Throwable root = e;
+            while (root.getCause() != null) root = root.getCause();
+
+            info.append("❌ SEND FAILED\n");
+            info.append("Exception : ").append(e.getClass().getName()).append("\n");
+            info.append("Message   : ").append(e.getMessage()).append("\n");
+            info.append("Root cause: ").append(root.getClass().getName()).append(" — ").append(root.getMessage()).append("\n");
+            return info.toString();
         }
     }
 
     /**
-     * Sends a custom email using query parameters
-     * Example: GET /test/sendCustom?to=email@example.com&subject=Hello&body=Hi+there
+     * Send to a custom address.
+     * GET /test/sendCustom?to=email@example.com&subject=Hello&body=Hi+there
      */
     @GetMapping("/sendCustom")
     public String sendCustomEmail(
@@ -54,22 +77,13 @@ public class EmailTestController {
             @RequestParam String subject,
             @RequestParam String body) {
 
-        if (to == null || to.isBlank()) {
-            return "❌ 'to' parameter is required";
-        }
-        if (subject == null || subject.isBlank()) {
-            return "❌ 'subject' parameter is required";
-        }
-        if (body == null || body.isBlank()) {
-            return "❌ 'body' parameter is required";
-        }
-
         try {
             emailService.sendEmail(to, subject, body);
-            return "✅ Email sent successfully to " + to;
+            return "✅ Email sent successfully to: " + to;
         } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Failed to send email: " + e.getMessage();
+            Throwable root = e;
+            while (root.getCause() != null) root = root.getCause();
+            return "❌ Failed — " + root.getClass().getSimpleName() + ": " + root.getMessage();
         }
     }
 }
