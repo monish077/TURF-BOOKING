@@ -32,20 +32,22 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setEnabled(false);
-        user.setVerificationToken(UUID.randomUUID().toString());
+        user.setEnabled(false);                                  // ← Require email verification
+        user.setVerificationToken(UUID.randomUUID().toString()); // ← Generate verification token
         if (user.getRole() == null) {
             user.setRole(Role.USER);
         }
 
         User savedUser = userRepository.save(user);
-        System.out.println("[REGISTER] New user registered: " + savedUser.getEmail());
+        System.out.println("[REGISTER] New user registered: " + savedUser.getEmail() + " — awaiting email verification");
 
+        // Send verification email
         try {
             emailService.sendVerificationEmail(savedUser);
+            System.out.println("[REGISTER] Verification email sent to: " + savedUser.getEmail());
         } catch (Exception e) {
-            System.err.println("❌ [REGISTER] Failed to send verification email: " + e.getMessage());
-            // Log the failure but do not roll back the registration in sandbox/test environments
+            System.err.println("[REGISTER] Failed to send verification email to: " + savedUser.getEmail() + " — " + e.getMessage());
+            // Don't fail registration if email fails; user can request resend
         }
 
         return savedUser;
