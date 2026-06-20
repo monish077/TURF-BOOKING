@@ -47,8 +47,10 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> getBookingsByAdminEmail(String adminEmail) {
-        // Get all turfs administered by this admin
-        List<Turf> adminTurfs = turfRepository.findByAdmin_Email(adminEmail);
+        // Find turfs administered by this admin by filtering all turfs
+        List<Turf> adminTurfs = turfRepository.findAll().stream()
+                .filter(turf -> turf.getAdmin() != null && adminEmail.equals(turf.getAdmin().getEmail()))
+                .collect(Collectors.toList());
 
         // Convert turf IDs to String to match 'turfId' in Booking
         List<String> turfIds = adminTurfs.stream()

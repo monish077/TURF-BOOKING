@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { sendBookingConfirmation } from "../services/Api"; // ✅ Named import
+import { sendBookingConfirmation } from "../services/Api";
+import { motion } from "framer-motion";
+import { Banknote, Loader2, CheckCircle2 } from "lucide-react";
 
 const PaymentPage = () => {
   const { bookingId } = useParams();
@@ -11,104 +13,68 @@ const PaymentPage = () => {
     try {
       setLoading(true);
 
-      // Simulate payment delay
+      // Simulate processing delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Send confirmation
+      // Send confirmation email
       await sendBookingConfirmation(bookingId);
 
       navigate("/payment-success");
     } catch (error) {
-      console.error("❌ Payment or email sending failed:", error);
-      alert("Something went wrong during payment or email sending.");
+      console.error("❌ Confirmation failed:", error);
+      alert("Something went wrong during confirmation. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Ensure fade-in keyframes are injected once
-  useEffect(() => {
-    const sheet = document.styleSheets[0];
-    if (sheet) {
-      try {
-        sheet.insertRule(
-          `
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-          }
-        `,
-          sheet.cssRules.length
-        );
-      } catch {
-        // Ignore if already exists
-      }
-    }
-  }, []);
-
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>💳 Payment Page</h2>
-        <p style={styles.text}>Booking ID: {bookingId}</p>
-        <p style={styles.text}>Proceed to complete your payment.</p>
+    <div className="min-h-screen bg-[#060a0f] flex items-center justify-center font-inter p-6 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-emerald-500/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-violet-600/10 blur-[120px] rounded-full" />
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 text-center"
+      >
+        <div className="mx-auto w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
+          <Banknote size={32} className="text-emerald-400" />
+        </div>
+
+        <h2 className="text-2xl font-black text-white mb-2">Booking Confirmation</h2>
+        <p className="text-slate-400 mb-6 font-mono text-sm">ID: {bookingId}</p>
+
+        <div className="bg-[#0d1520] border border-white/5 rounded-2xl p-6 mb-8 text-left">
+          <div className="flex items-center gap-3 mb-4">
+            <CheckCircle2 size={20} className="text-emerald-400" />
+            <h3 className="font-bold text-white">Payment Method</h3>
+          </div>
+          <p className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 text-center py-2">
+            Only Cash on Spot Available
+          </p>
+          <p className="text-sm text-slate-400 text-center mt-2">
+            Please pay at the arena counter before your game starts.
+          </p>
+        </div>
 
         <button
-          style={{
-            ...styles.payButton,
-            backgroundColor: loading ? "#aaa" : "#00d395",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
           onClick={handlePayment}
           disabled={loading}
+          className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50 disabled:cursor-not-allowed text-black font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(52,211,153,0.3)] hover:shadow-[0_0_30px_rgba(52,211,153,0.5)] transition-all flex items-center justify-center gap-2"
         >
-          {loading ? "Processing..." : "Pay Now"}
+          {loading ? (
+            <><Loader2 className="animate-spin" size={20} /> Confirming...</>
+          ) : (
+            "Confirm Booking"
+          )}
         </button>
-      </div>
+      </motion.div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    backgroundColor: "#0f291f",
-    height: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "Arial, sans-serif",
-    padding: "20px",
-  },
-  card: {
-    backgroundColor: "#1c3a2b",
-    color: "#fff",
-    padding: "40px 20px",
-    borderRadius: "12px",
-    textAlign: "center",
-    boxShadow: "0px 0px 15px rgba(0,0,0,0.3)",
-    width: "100%",
-    maxWidth: "400px",
-    animation: "fadeIn 0.4s ease-in-out",
-  },
-  title: {
-    fontSize: "24px",
-    marginBottom: "15px",
-  },
-  text: {
-    fontSize: "16px",
-    margin: "10px 0",
-  },
-  payButton: {
-    backgroundColor: "#00d395",
-    color: "#fff",
-    border: "none",
-    padding: "12px 25px",
-    fontSize: "16px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    marginTop: "20px",
-    transition: "background-color 0.2s ease",
-  },
 };
 
 export default PaymentPage;

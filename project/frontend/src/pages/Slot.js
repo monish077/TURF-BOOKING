@@ -84,7 +84,6 @@ const Slot = () => {
           MARS ARENA
         </Link>
         <div className="flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium text-slate-400 hover:text-emerald-400 transition-colors">Home</Link>
           <Link to="/view-bookings" className="text-sm font-medium text-slate-400 hover:text-emerald-400 transition-colors">My Bookings</Link>
           <button 
             onClick={handleLogout}
