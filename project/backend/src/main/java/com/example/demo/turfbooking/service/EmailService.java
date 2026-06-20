@@ -1,32 +1,40 @@
 package com.example.demo.turfbooking.service;
 
 import com.example.demo.turfbooking.entity.User;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    // ── CONFIGURATION ────────────────────────────────────────────────────────
+    
+    // Read the API key from environment variables (we will set this in Render)
+    @Value("${BREVO_API_KEY:}")
+    private String brevoApiKey;
 
-    // ── URLs ───────────────────────────────────────────────────────────────
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
     private static final String FRONTEND_URL  = "https://turf-booking-seven.vercel.app";
+    
+    // The email address you will verify in Brevo
     private static final String SENDER_EMAIL  = "monidhoni0007@gmail.com";
     private static final String SENDER_NAME   = "Mars Arena Turf Booking";
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     // ══════════════════════════════════════════════════════════════════════
     //  PUBLIC METHODS
     // ══════════════════════════════════════════════════════════════════════
 
-    /** Verification email sent on new registration. */
     public void sendVerificationEmail(User user) {
         String verifyURL = FRONTEND_URL + "/verify-email?token=" + user.getVerificationToken();
 
@@ -47,10 +55,9 @@ public class EmailService {
             </div>
             """.formatted(user.getName(), verifyURL, verifyURL);
 
-        sendHtmlEmail(user.getEmail(), "✅ Verify your email — Mars Arena Turf Booking", html);
+        sendHtmlEmailViaApi(user.getEmail(), user.getName(), "✅ Verify your email — Mars Arena Turf Booking", html);
     }
 
-    /** Password reset email. */
     public void sendResetPasswordEmail(User user) {
         String resetURL = FRONTEND_URL + "/reset-password?token=" + user.getResetPasswordToken();
 
@@ -72,18 +79,12 @@ public class EmailService {
             </div>
             """.formatted(user.getName(), resetURL, resetURL);
 
-        sendHtmlEmail(user.getEmail(), "🔐 Reset your password — Mars Arena", html);
+        sendHtmlEmailViaApi(user.getEmail(), user.getName(), "🔐 Reset your password — Mars Arena", html);
     }
 
-    /** Booking confirmation email after successful payment. */
     public void sendBookingConfirmationEmail(
-            String toEmail,
-            String userName,
-            String turfName,
-            String date,
-            String slot,
-            String price
-    ) {
+            String toEmail, String userName, String turfName, String date, String slot, String price) {
+        
         String html = """
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9f9f9;border-radius:8px;">
               <h2 style="color:#1565c0;">🎉 Booking Confirmed — Mars Arena</h2>
@@ -113,69 +114,52 @@ public class EmailService {
             </div>
             """.formatted(userName, turfName, date, slot, price);
 
-        sendHtmlEmail(toEmail, "🎉 Booking Confirmed — " + turfName, html);
+        sendHtmlEmailViaApi(toEmail, userName, "🎉 Booking Confirmed — " + turfName, html);
     }
 
-    /** Generic plain/html email for diagnostics or custom use. */
     public void sendEmail(String to, String subject, String content) {
-        sendHtmlEmail(to, subject, content);
+        sendHtmlEmailViaApi(to, "User", subject, content);
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    //  PRIVATE CORE SENDER
+    //  PRIVATE CORE SENDER (REST API)
     // ══════════════════════════════════════════════════════════════════════
 
-    /**
-     * Core HTML mail sender.
-     * Uses InternetAddress directly to avoid UnsupportedEncodingException
-     * from the MimeMessageHelper.setFrom(String, String) overload.
-     */
-    private void sendHtmlEmail(String to, String subject, String htmlContent) {
-        System.out.println("[EMAIL] Attempting to send email to: " + to);
-        System.out.println("[EMAIL] Subject: " + subject);
+    private void sendHtmlEmailViaApi(String toEmail, String toName, String subject, String htmlContent) {
+        System.out.println("[API-EMAIL] Attempting to send email via Brevo to: " + toEmail);
+
+        if (brevoApiKey == null || brevoApiKey.isBlank() || brevoApiKey.equals("NOT_SET")) {
+            System.err.println("[API-EMAIL] ❌ BREVO_API_KEY is not set! Cannot send email.");
+            throw new RuntimeException("Email API key is missing.");
+        }
 
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey);
+            headers.set("accept", "application/json");
 
-            // ✅ Use InternetAddress to avoid UnsupportedEncodingException
-            try {
-                message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME));
-            } catch (UnsupportedEncodingException e) {
-                System.err.println("[EMAIL] setFrom encoding error, falling back to plain address: " + e.getMessage());
-                message.setFrom(new InternetAddress(SENDER_EMAIL));
+            Map<String, Object> body = new HashMap<>();
+            body.put("sender", Map.of("name", SENDER_NAME, "email", SENDER_EMAIL));
+            body.put("to", List.of(Map.of("email", toEmail, "name", toName)));
+            body.put("subject", subject);
+            body.put("htmlContent", htmlContent);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            
+            ResponseEntity<String> response = restTemplate.postForEntity(BREVO_API_URL, request, String.class);
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println("[API-EMAIL] ✅ Email sent successfully! Brevo response: " + response.getBody());
+            } else {
+                System.err.println("[API-EMAIL] ❌ Failed to send email. Status: " + response.getStatusCode());
+                throw new RuntimeException("API responded with " + response.getStatusCode());
             }
 
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-            System.out.println("[EMAIL] ✅ Sent successfully to: " + to);
-
-        } catch (MessagingException e) {
-            // Dig into the cause chain for the real reason
-            Throwable root = getRootCause(e);
-            System.err.println("[EMAIL] ❌ MessagingException sending to " + to);
-            System.err.println("[EMAIL]    Message : " + e.getMessage());
-            System.err.println("[EMAIL]    Root cause: " + root.getClass().getName() + " — " + root.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Email send failed (SMTP): " + root.getMessage(), e);
-
         } catch (Exception e) {
-            Throwable root = getRootCause(e);
-            System.err.println("[EMAIL] ❌ Unexpected error sending to " + to);
-            System.err.println("[EMAIL]    Type: " + e.getClass().getName());
-            System.err.println("[EMAIL]    Message: " + e.getMessage());
-            System.err.println("[EMAIL]    Root cause: " + root.getClass().getName() + " — " + root.getMessage());
+            System.err.println("[API-EMAIL] ❌ Exception while calling Brevo API: " + e.getMessage());
             e.printStackTrace();
-            throw new RuntimeException("Email send failed: " + root.getMessage(), e);
+            throw new RuntimeException("Email send failed via API: " + e.getMessage(), e);
         }
-    }
-
-    /** Walks the exception cause chain to find the deepest cause. */
-    private Throwable getRootCause(Throwable t) {
-        Throwable cause = t.getCause();
-        return (cause == null) ? t : getRootCause(cause);
     }
 }
